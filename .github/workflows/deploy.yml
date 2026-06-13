@@ -1,0 +1,60 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# cancel-in-progress: false — деплой, который уже идёт, всегда доводится до конца
+# (отмена посреди deploy-pages оставляет Pages в сломанном состоянии); новые пуши
+# просто встают в очередь и схлопываются (spec §12).
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      # Бюджет производительности (spec §6/§12): весь JS сайта (main + lazy-чанки,
+      # без админки) — не больше 90 KB gzip.
+      - name: JS size guard (90 KB gzip cap)
+        run: |
+          total=0
+          for f in dist/assets/*.js; do
+            case "$(basename "$f")" in admin-*) continue ;; esac
+            size=$(gzip -c "$f" | wc -c)
+            echo "$(basename "$f"): ${size} B gzip"
+            total=$((total + size))
+          done
+          echo "total: ${total} B gzip (cap: 92160 B)"
+          if [ "$total" -gt 92160 ]; then
+            echo "::error::Site JS exceeds the 90 KB gzip budget (spec §6)"
+            exit 1
+          fi
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

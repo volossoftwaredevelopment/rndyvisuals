@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>rndyvisuals — Yacht &amp; Sea Films · Ivan Rudy</title>
+    <meta
+      name="description"
+      content="Ivan Rudy — videographer for yachts, regattas and the open sea. Based in Greece, shooting worldwide. Charter films, regatta highlights and licensed aerial coastline work."
+    />
+    <meta name="theme-color" content="#070B0F" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="rndyvisuals" />
+    <meta property="og:title" content="rndyvisuals — Yacht &amp; Sea Films · Ivan Rudy" />
+    <meta
+      property="og:description"
+      content="Videographer for yachts, regattas and the open sea. Based in Greece — shooting worldwide."
+    />
+    <meta property="og:image" content="https://55kt.github.io/rndyvisuals/og.jpg" />
+    <meta property="og:url" content="https://55kt.github.io/rndyvisuals/" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="rndyvisuals — Yacht &amp; Sea Films · Ivan Rudy" />
+    <meta
+      name="twitter:description"
+      content="Videographer for yachts, regattas and the open sea. Based in Greece — shooting worldwide."
+    />
+    <meta name="twitter:image" content="https://55kt.github.io/rndyvisuals/og.jpg" />
+
+    <!-- js gate + repeat-visit short path, before first paint -->
+    <script>
+      (function () {
+        var d = document.documentElement;
+        d.className += ' js';
+        try {
+          if (sessionStorage.getItem('seen-intro') === '1') d.className += ' seen-intro';
+        } catch (e) {}
+      })();
+    </script>
+
+    <!-- preloader critical CSS — must paint before any bundle loads (§4.1) -->
+    <style>
+      body {
+        margin: 0;
+        background: #070b0f;
+      }
+      #preloader {
+        position: fixed;
+        inset: 0;
+        z-index: 900;
+        font-family: 'Space Grotesk Variable', 'Space Grotesk', system-ui, sans-serif;
+      }
+      .preloader__under {
+        position: absolute;
+        inset: 0;
+        background: #04070a;
+        clip-path: inset(0 0 0 0);
+      }
+      .preloader__panel {
+        position: absolute;
+        inset: 0;
+        background: #070b0f;
+        clip-path: inset(0 0 0 0);
+      }
+      .preloader__brand {
+        position: absolute;
+        top: 1.5rem;
+        left: 2rem;
+        margin: 0;
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #7c8a8e;
+      }
+      .preloader__counter-mask {
+        position: absolute;
+        bottom: 1.25rem;
+        left: 2rem;
+        overflow: hidden;
+        line-height: 0.9;
+      }
+      .preloader__counter {
+        display: block;
+        font-size: 12vw;
+        font-weight: 500;
+        letter-spacing: -0.02em;
+        color: #4e5b60;
+        font-variant-numeric: tabular-nums;
+      }
+      .preloader__coords {
+        position: absolute;
+        bottom: 1.5rem;
+        right: 2rem;
+        margin: 0;
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.08em;
+        color: #4e5b60;
+        font-variant-numeric: tabular-nums;
+      }
+      html:not(.js) #preloader {
+        display: none;
+      }
+      html.seen-intro .preloader__brand,
+      html.seen-intro .preloader__counter-mask,
+      html.seen-intro .preloader__coords {
+        visibility: hidden;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .preloader__counter-mask,
+        .preloader__coords {
+          display: none;
+        }
+      }
+    </style>
+
+    <script type="module" src="./src/main.ts"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#work">Skip to work index</a>
+
+    <div class="preloader" id="preloader" aria-hidden="true">
+      <div class="preloader__under"></div>
+      <div class="preloader__panel">
+        <p class="preloader__brand">RNDYVISUALS — YACHT &amp; SEA FILMS</p>
+        <div class="preloader__counter-mask">
+          <span class="preloader__counter">0</span>
+        </div>
+        <p class="preloader__coords">37.98° N, 23.72° E</p>
+      </div>
+    </div>
+
+    <header class="header">
+      <a class="header__brand" href="#top" aria-label="rndyvisuals — back to top">RNDY<sup>®</sup></a>
+      <nav class="header__nav" aria-label="Primary">
+        <a class="header__link" href="#work">Work</a>
+        <a class="header__link header__link--secondary" href="#about">About</a>
+        <a class="header__link header__link--secondary" href="#contact">Contact</a>
+        <a
+          class="header__link header__link--wa"
+          href="https://wa.me/306934631572"
+          target="_blank"
+          rel="noopener noreferrer"
+          >WhatsApp</a
+        >
+      </nav>
+    </header>
+
+    <main id="main">
+      <!-- §4.2 hero -->
+      <section class="hero" id="top" aria-label="Intro">
+        <div class="hero__media" aria-hidden="true">
+          <div class="hero__media-inner">
+            <div class="hero__sea"></div>
+            <div class="hero__glow"></div>
+            <div class="hero__grain"></div>
+            <!-- drop-in slot for the real hero loop (≤2.5 MB, 1280×720, muted):
+            <video
+              class="hero__video"
+              src="./hero.mp4"
+              poster="./hero-poster.jpg"
+              autoplay
+              muted
+              loop
+              playsinline
+              fetchpriority="high"
+            ></video>
+            -->
+          </div>
+          <div class="hero__scrim"></div>
+        </div>
+        <div class="hero__lockup">
+          <p class="hero__eyebrow micro" data-hero-fade>RNDYVISUALS — IVAN RUDY</p>
+          <h1 class="hero__title display">
+            <span class="hero__title-line">ON THE</span>
+            <span class="hero__title-line">WAVE</span>
+          </h1>
+          <p class="hero__sub" data-hero-fade>
+            Videographer for yachts, regattas and the open sea. Based in Greece — shooting
+            worldwide.
+          </p>
+          <ul class="hero__meta micro tabular" data-hero-fade>
+            <li>ATHENS, GR · 37.98° N, 23.72° E</li>
+            <li>AVAILABLE — SEASON 2026</li>
+          </ul>
+          <p class="hero__cta" data-hero-fade>
+            <a class="btn" href="#reel" data-magnetic
+              ><span class="btn__label" data-magnetic-label>Watch the reel</span></a
+            >
+          </p>
+        </div>
+      </section>
+
+      <!-- §4.3 featured showreel -->
+      <section class="section reel" id="reel" aria-labelledby="reel-eyebrow">
+        <p class="eyebrow micro" id="reel-eyebrow" data-reveal="fade-up">SHOWREEL — '25</p>
+        <button
+          class="reel__frame"
+          type="button"
+          data-cursor="play"
+          data-reveal="clip"
+          data-parallax-frame
+          aria-label="Play showreel — two minutes of open water"
+        >
+          <span class="reel__inner" data-clip-inner data-parallax-media></span>
+          <span class="reel__overlay" aria-hidden="true"></span>
+          <span class="reel__caption" aria-hidden="true">Two minutes of open water.</span>
+          <span class="chip reel__chip tabular" aria-hidden="true">2:06</span>
+          <span class="reel__play micro" aria-hidden="true">PLAY</span>
+        </button>
+      </section>
+
+      <!-- §4.4 work index — rows rendered from the manifest -->
+      <section class="section work" id="work" aria-labelledby="work-title">
+        <p class="eyebrow micro" data-reveal="fade-up">SELECTED WORK 2023–2025</p>
+        <h2 class="section__title display" id="work-title" data-reveal="headline-lines">
+          WORK INDEX (08)
+        </h2>
+        <ol class="work__list"></ol>
+        <noscript>
+          <ol class="noscript-list">
+            <li>01 — Aegean Crossing · S/Y Mythos · Yacht Film · 1:24 · 2025</li>
+            <li>02 — Meltemi · Saronic Regatta Week · Regatta Film · 2:08 · 2025</li>
+            <li>03 — Ionian, Slowly · Navis Yachting · Charter Promo · 1:05 · 2024</li>
+            <li>04 — Coastline Study I · Personal · Drone Study · 1:48 · 2024</li>
+            <li>05 — Delivery at First Light · M/Y Eleonora K · Delivery Film · 1:32 · 2025</li>
+            <li>06 — Spetses Classic · Classic Week Spetses · Regatta Film · 2:24 · 2023</li>
+            <li>07 — The Winter Sea · Personal · Short Film · 3:02 · 2024</li>
+            <li>08 — Tender to Shore · Calypso Charters · Charter Promo · 0:58 · 2023</li>
+          </ol>
+        </noscript>
+      </section>
+
+      <!-- §4.5 about -->
+      <section class="section about" id="about" aria-labelledby="about-title">
+        <h2 class="section__title display" id="about-title" data-reveal="headline-lines">
+          SHOT FROM THE WATER, NOT THE SHORE.
+        </h2>
+        <div class="about__grid">
+          <figure class="about__portrait" data-reveal="clip">
+            <span class="about__portrait-art" data-clip-inner aria-hidden="true">
+              <span class="about__portrait-sea"></span>
+              <span class="about__portrait-grain"></span>
+              <span class="about__portrait-meta micro tabular">ON LOCATION · 37.98° N, 23.72° E</span>
+            </span>
+            <!-- drop-in slot for the real portrait still:
+            <img
+              class="about__photo"
+              src="./portrait.jpg"
+              alt="Ivan Rudy filming from a tender at sea"
+              loading="lazy"
+              decoding="async"
+            />
+            -->
+          </figure>
+          <div class="about__copy">
+            <p class="about__lede" data-reveal="fade-up">
+              I'm Ivan — a videographer based in Greece, working on and around the water.
+            </p>
+            <p class="about__body" data-reveal="fade-up">
+              For the past several seasons I've filmed sailing yachts, motor yachts, regattas and
+              the coastlines between them — from the deck, the tender and the air. My job is simple
+              to say and hard to do: make a vessel feel the way it feels to be aboard. The light at
+              seven in the morning. The sound of the hull at speed. The quiet after the sails are
+              trimmed. I keep crews small, schedules tight and edits honest. If it floats, I'll
+              find the film in it.
+            </p>
+            <ul class="about__meta">
+              <li class="micro" data-reveal="fade-up">BASED — ATHENS, GREECE</li>
+              <li class="micro" data-reveal="fade-up">LICENSED DRONE OPERATOR (EASA A1/A3)</li>
+              <li class="micro" data-reveal="fade-up">DELIVERY — 4K MASTERS + SOCIAL CUTS</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- §4.6 services / approach -->
+      <section class="section approach" id="approach" aria-labelledby="approach-eyebrow">
+        <p class="eyebrow micro" id="approach-eyebrow" data-reveal="fade-up">WHAT I SHOOT</p>
+        <ol class="approach__list">
+          <li class="approach__row">
+            <span class="approach__rule" data-reveal="rule" aria-hidden="true"></span>
+            <div class="approach__inner" data-reveal="fade-up">
+              <span class="approach__num micro tabular" aria-hidden="true">01</span>
+              <h3 class="approach__name display">Charter &amp; brokerage films</h3>
+              <p class="approach__desc">
+                A vessel's best ninety seconds. Built for charter listings, brokers and owners.
+              </p>
+            </div>
+          </li>
+          <li class="approach__row">
+            <span class="approach__rule" data-reveal="rule" aria-hidden="true"></span>
+            <div class="approach__inner" data-reveal="fade-up">
+              <span class="approach__num micro tabular" aria-hidden="true">02</span>
+              <h3 class="approach__name display">Regattas &amp; events</h3>
+              <p class="approach__desc">
+                Race starts, mark roundings, prize-givings. Same-week highlight edits.
+              </p>
+            </div>
+          </li>
+          <li class="approach__row">
+            <span class="approach__rule" data-reveal="rule" aria-hidden="true"></span>
+            <div class="approach__inner" data-reveal="fade-up">
+              <span class="approach__num micro tabular" aria-hidden="true">03</span>
+              <h3 class="approach__name display">Aerial &amp; coastline</h3>
+              <p class="approach__desc">
+                Licensed drone work over open water — establishing shots, itineraries, anchorages.
+              </p>
+            </div>
+          </li>
+        </ol>
+        <span class="rule-line" data-reveal="rule" aria-hidden="true"></span>
+        <p class="approach__close caption" data-reveal="fade-up">
+          4K masters · vertical social cuts · 48-hour preview edit on request.
+        </p>
+      </section>
+
+      <!-- §4.7 contact / footer -->
+      <section class="section contact" id="contact" aria-labelledby="contact-title">
+        <div class="contact__body">
+          <h2 class="contact__title display" id="contact-title" data-reveal="headline-lines">
+            TELL ME ABOUT YOUR BOAT.
+          </h2>
+          <div class="contact__ctas">
+            <a
+              class="btn btn--lg"
+              href="https://wa.me/306934631572"
+              target="_blank"
+              rel="noopener noreferrer"
+              data-reveal="fade-up"
+              data-magnetic
+              ><span class="btn__label" data-magnetic-label>WhatsApp +30 693 463 1572</span></a
+            >
+            <a class="btn btn--lg" href="mailto:hello@rndyvisuals.com" data-reveal="fade-up" data-magnetic
+              ><span class="btn__label" data-magnetic-label>hello@rndyvisuals.com</span></a
+            >
+          </div>
+          <p class="contact__note caption" data-reveal="fade-up">
+            Based in Athens — available worldwide. Charters: dates &amp; itinerary. Regattas:
+            schedule &amp; format. Reply within 24–48 h.
+          </p>
+        </div>
+        <!-- nested inside section/main, so the landmark needs the explicit role -->
+        <footer class="footer" role="contentinfo">
+          <span class="rule-line" data-reveal="rule" aria-hidden="true"></span>
+          <div class="footer__bar micro">
+            <span class="footer__copy">© 2026 rndyvisuals — Ivan Rudy</span>
+            <a href="https://www.instagram.com/rndyvisuals/" target="_blank" rel="noopener noreferrer"
+              >Instagram</a
+            >
+            <a
+              href="https://www.youtube.com/@OnthewavewithIvan"
+              target="_blank"
+              rel="noopener noreferrer"
+              >YouTube</a
+            >
+            <span class="tabular">37.98° N, 23.72° E</span>
+            <a href="#top">Back to top</a>
+          </div>
+        </footer>
+      </section>
+    </main>
+
+    <div class="grain" aria-hidden="true"></div>
+  </body>
+</html>

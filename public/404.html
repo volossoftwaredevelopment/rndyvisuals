@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <meta name="theme-color" content="#070B0F" />
+  <title>404 — Lost at Sea · rndyvisuals</title>
+  <style>
+    /* Standalone page: no JS, no webfonts — system fallbacks per site token stacks. */
+    :root {
+      --bg: #070B0F;
+      --line: #1C2730;
+      --ink-hi: #EAF0EF;
+      --ink: #B8C4C6;
+      --ink-mid: #7C8A8E;
+      --ink-low: #4E5B60;
+      --accent: #5FC9BA;
+      --font-display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+      --font-text: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-text);
+      display: flex;
+      flex-direction: column;
+      min-height: 100svh;
+      padding: clamp(20px, 4vw, 48px);
+      position: relative;
+      overflow-x: hidden;
+      background-image: radial-gradient(120% 90% at 50% 110%, #0D141A 0%, #070B0F 60%);
+    }
+    /* film grain, same 3.5% opacity as the site */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.035;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='128' height='128' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+    .micro {
+      font-size: 0.6875rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-variant-numeric: tabular-nums;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      color: var(--ink-mid);
+    }
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 8vh 0;
+    }
+    h1 {
+      font-family: var(--font-display);
+      font-stretch: 125%;
+      font-weight: 700;
+      font-size: clamp(3rem, 13vw, 11rem);
+      line-height: 0.94;
+      letter-spacing: -0.01em;
+      text-transform: uppercase;
+      color: var(--ink-hi);
+    }
+    h1 span { display: block; }
+    .sub {
+      margin-top: 28px;
+      color: var(--ink-mid);
+    }
+    .back {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 44px;
+      width: fit-content;
+      color: var(--ink-hi);
+      text-decoration: none;
+      font-size: 0.6875rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--line);
+      transition: border-color 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    .back::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex: none;
+      transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    .back:hover { border-color: var(--accent); }
+    .back:hover::before { transform: scale(1.4); }
+    .back:focus-visible {
+      outline: 2px solid #2E5F58;
+      outline-offset: 4px;
+      border-radius: 2px;
+    }
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      color: var(--ink-low);
+      border-top: 1px solid var(--line);
+      padding-top: 20px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .back, .back::before { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="micro">
+    <span>RNDY&reg;</span>
+    <span>YACHT &amp; SEA FILMS</span>
+  </header>
+
+  <main>
+    <h1><span>Lost</span><span>At Sea</span></h1>
+    <p class="sub micro">404 &mdash; this frame was never shot</p>
+    <!-- Absolute URL on purpose: GitHub Pages serves 404.html at the requested
+         path, so a relative "./" would resolve against e.g. /rndyvisuals/work/foo
+         and loop back to this page. Update on custom-domain migration (see README). -->
+    <a class="back" href="https://55kt.github.io/rndyvisuals/">Back to harbor</a>
+  </main>
+
+  <footer class="micro">
+    <span>&copy; 2026 rndyvisuals</span>
+    <span>37.98&deg; N, 23.72&deg; E</span>
+  </footer>
+</body>
+</html>

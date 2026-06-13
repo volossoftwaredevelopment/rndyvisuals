@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex,nofollow" />
+    <meta name="color-scheme" content="dark" />
+    <title>RNDY — ADMIN</title>
+    <style>
+      html {
+        background: #070b0f;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="admin">
+      <header class="admin-head">
+        <span class="admin-wordmark">RNDY — ADMIN</span>
+        <span class="admin-sub">Site content manager</span>
+      </header>
+
+      <section class="panel" id="panel-token">
+        <div class="panel-head">
+          <span class="dot" id="token-dot" aria-hidden="true"></span>
+          <h2 class="panel-title">GitHub access</h2>
+        </div>
+        <div class="token-row">
+          <input
+            id="token-input"
+            class="field"
+            type="password"
+            placeholder="Paste your GitHub access token"
+            autocomplete="off"
+            spellcheck="false"
+            aria-label="GitHub access token"
+          />
+          <button id="token-save" class="btn" type="button">Save</button>
+          <button id="token-forget" class="btn btn--ghost" type="button" hidden>Forget token</button>
+        </div>
+        <p class="help">
+          Create one at
+          <a href="https://github.com/settings/personal-access-tokens" target="_blank" rel="noopener noreferrer"
+            >github.com/settings/personal-access-tokens</a
+          >
+          → “Fine-grained tokens” → Generate new token. Repository access: only
+          <code id="help-repo"></code>. Permissions: <strong>Contents — Read and write</strong> and
+          <strong>Actions — Read-only</strong>. The token is stored in this browser only.
+        </p>
+        <p class="msg" id="token-msg" hidden></p>
+      </section>
+
+      <section class="panel" id="panel-videos" hidden>
+        <div class="panel-head">
+          <h2 class="panel-title">Videos — top to bottom is the order on the site</h2>
+          <span class="panel-note" id="videos-note"></span>
+        </div>
+        <p class="msg" id="videos-msg" hidden></p>
+        <button id="videos-retry" class="btn" type="button" hidden>Try again</button>
+        <ol class="rows" id="rows"></ol>
+        <div class="add">
+          <div class="add-row">
+            <input
+              id="add-url"
+              class="field"
+              type="url"
+              placeholder="Paste a YouTube or Vimeo link to add a film"
+              spellcheck="false"
+              aria-label="Video link"
+            />
+            <button id="add-btn" class="btn" type="button">Add video</button>
+          </div>
+          <div class="add-foot">
+            <button id="add-blank" class="btn btn--ghost" type="button">+ Add a blank placeholder instead</button>
+          </div>
+          <p class="msg" id="add-msg" hidden></p>
+        </div>
+      </section>
+
+      <footer class="publish" id="publish-bar" hidden>
+        <p class="msg" id="publish-msg" hidden></p>
+        <div class="publish-row">
+          <button id="publish-btn" class="btn btn--primary" type="button" disabled>Publish</button>
+          <div class="deploy">
+            <span class="pill" id="deploy-pill" hidden></span>
+            <button
+              id="deploy-refresh"
+              class="icon-btn"
+              type="button"
+              title="Check build status"
+              aria-label="Check build status"
+              hidden
+            >
+              ↻
+            </button>
+          </div>
+        </div>
+      </footer>
+    </main>
+    <script type="module" src="./src/admin/admin.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,57 @@
+/* RNDYVISUALS — design tokens (DESIGN_SPEC §2 palette, §3 type, §6 easings) */
+
+:root {
+  /* surfaces — near-black with a cold sea tint */
+  --bg:        #070B0F;
+  --surface:   #0D141A;
+  --surface-2: #131C24;
+
+  /* lines */
+  --line:        #1C2730;
+  --line-strong: #2C3A45;
+
+  /* ink — foam off-white ramp */
+  --ink-hi:  #EAF0EF;
+  --ink:     #B8C4C6;
+  --ink-mid: #7C8A8E;
+  --ink-low: #4E5B60;
+
+  /* accent — sea glass; rationed per §2 rule */
+  --accent:     #5FC9BA;
+  --accent-dim: #2E5F58;
+
+  /* utility */
+  --scrim:   rgba(7, 11, 15, 0.78);
+  --grain-o: 0.035;
+
+  /* typography — fontsource variable families (§3) */
+  --font-display: 'Archivo Variable', 'Archivo', 'Arial Narrow', Impact, sans-serif;
+  --font-text:    'Space Grotesk Variable', 'Space Grotesk', 'Inter', system-ui, sans-serif;
+
+  /* fluid type scale */
+  --fs-hero:    clamp(3.25rem, 11vw, 10rem);
+  --fs-h2:      clamp(2.25rem, 6vw, 4.5rem);
+  --fs-h3:      clamp(1.25rem, 2.2vw, 1.75rem);
+  --fs-body:    clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
+  --fs-caption: clamp(0.8125rem, 0.78rem + 0.2vw, 0.875rem);
+  --fs-micro:   0.6875rem;
+
+  /* easing tokens — the only three (§6) */
+  --ease-out-expo:   cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-quart:  cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-inout-circ: cubic-bezier(0.85, 0, 0.15, 1);
+
+  /* layout */
+  --gutter: clamp(1.25rem, 4vw, 4rem);
+
+  /* z scale */
+  --z-header:    600;
+  --z-preview:   700;
+  --z-overlay:   800;
+  --z-preloader: 900;
+  --z-grain:     950;
+  --z-cursor:    1000;
+
+  /* 128px tiled fractal-noise grain — single inline SVG asset (§8) */
+  --grain-url: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='128' height='128' filter='url(%23n)'/%3E%3C/svg%3E");
+}

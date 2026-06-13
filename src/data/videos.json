@@ -1,0 +1,92 @@
+{
+  "videos": [
+    {
+      "id": "aegean-crossing",
+      "title": "Aegean Crossing",
+      "client": "S/Y Mythos",
+      "category": "Yacht Film",
+      "year": 2025,
+      "duration": "1:24",
+      "source": { "type": "placeholder" },
+      "poster": "",
+      "featured": true
+    },
+    {
+      "id": "meltemi",
+      "title": "Meltemi",
+      "client": "Saronic Regatta Week",
+      "category": "Regatta Film",
+      "year": 2025,
+      "duration": "2:08",
+      "source": { "type": "placeholder" },
+      "poster": "",
+      "featured": true
+    },
+    {
+      "id": "ionian-slowly",
+      "title": "Ionian, Slowly",
+      "client": "Navis Yachting",
+      "category": "Charter Promo",
+      "year": 2024,
+      "duration": "1:05",
+      "source": { "type": "placeholder" },
+      "poster": "",
+      "featured": false
+    },
+    {
+      "id": "coastline-study-i",
+      "title": "Coastline Study I",
+      "client": "Personal",
+      "category": "Drone Study",
+      "year": 2024,
+      "duration": "1:48",
+      "source": { "type": "placeholder" },
+      "poster": "",
+      "featured": false
+    },
+    {
+      "id": "first-light-delivery",
+      "title": "Delivery at First Light",
+      "client": "M/Y Eleonora K",
+      "category": "Delivery Film",
+      "year": 2025,
+      "duration": "1:32",
+      "source": { "type": "placeholder" },
+      "poster": "",
+      "featured": false
+    },
+    {
+      "id": "spetses-classic",
+      "title": "Spetses Classic",
+      "client": "Classic Week Spetses",
+      "category": "Regatta Film",
+      "year": 2023,
+      "duration": "2:24",
+      "source": { "type": "placeholder" },
+      "poster": "",
+      "featured": false
+    },
+    {
+      "id": "the-winter-sea",
+      "title": "The Winter Sea",
+      "client": "Personal",
+      "category": "Short Film",
+      "year": 2024,
+      "duration": "3:02",
+      "source": { "type": "placeholder" },
+      "poster": "",
+      "featured": false
+    },
+    {
+      "id": "tender-to-shore",
+      "title": "Tender to Shore",
+      "client": "Calypso Charters",
+      "category": "Charter Promo",
+      "year": 2023,
+      "duration": "0:58",
+      "source": { "type": "placeholder" },
+      "poster": "",
+      "featured": false
+    }
+  ]
+}

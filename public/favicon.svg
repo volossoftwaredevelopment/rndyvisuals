@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect x="1" y="1" width="62" height="62" rx="14" fill="#070B0F" stroke="#1C2730" stroke-width="2"/>
+  <!-- single wave flourish, sea-glass accent; bold enough to read at 16px -->
+  <path d="M11 39 C 17 26, 25 26, 32 35 C 38 43, 46 42, 53 27"
+        fill="none" stroke="#5FC9BA" stroke-width="6" stroke-linecap="round"/>
+</svg>
