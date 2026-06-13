@@ -2,8 +2,8 @@
 
 Одностраничный кинематографичный сайт видеографа **Ivan Rudy (rndyvisuals)** — яхты, регаты, открытое море, Греция.
 
-- **Сайт:** https://55kt.github.io/rndyvisuals/
-- **Админка:** https://55kt.github.io/rndyvisuals/admin.html (скрытая, ссылок с сайта на неё нет)
+- **Сайт:** https://volossoftwaredevelopment.github.io/rndyvisuals/
+- **Админка:** https://volossoftwaredevelopment.github.io/rndyvisuals/admin.html (скрытая, ссылок с сайта на неё нет)
 
 **Стек:** Vite + чистый TypeScript (без фреймворков), GSAP + ScrollTrigger (анимации), Lenis (плавный скролл), SplitType (анимация текста). Шрифты Archivo и Space Grotesk — self-hosted через Fontsource. Хостинг — GitHub Pages, деплой через GitHub Actions.
 
@@ -46,14 +46,14 @@ npm run preview    # посмотреть собранную версию лок
 
 ### Способ 1 — через админку (для Ивана, без кода)
 
-Открой **https://55kt.github.io/rndyvisuals/admin.html**
+Открой **https://volossoftwaredevelopment.github.io/rndyvisuals/admin.html**
 
 **Шаг 0 — один раз: создать токен GitHub.** Токен — это «ключ», которым админка сохраняет изменения в репозиторий.
 
 1. Зайди на GitHub под аккаунтом-владельцем репозитория и открой
    **github.com/settings/personal-access-tokens** → **Generate new token** (Fine-grained).
 2. Название — любое, например `rndyvisuals-admin`. Срок — максимум (потом можно продлить).
-3. **Repository access** → *Only select repositories* → выбери **55kt/rndyvisuals** (и только его).
+3. **Repository access** → *Only select repositories* → выбери **volossoftwaredevelopment/rndyvisuals** (и только его).
 4. **Permissions → Repository permissions:**
    - **Contents — Read and write** (чтобы сохранять список видео)
    - **Actions — Read-only** (чтобы админка показывала статус публикации)
@@ -135,11 +135,11 @@ npm run preview    # посмотреть собранную версию лок
    ```
    rndyvisuals.com
    ```
-2. У регистратора домена добавь DNS-запись **CNAME → `55kt.github.io`** (для apex-домена без `www` некоторые регистраторы требуют A/ALIAS-записи — см. доку GitHub Pages).
+2. У регистратора домена добавь DNS-запись **CNAME → `volossoftwaredevelopment.github.io`** (для apex-домена без `www` некоторые регистраторы требуют A/ALIAS-записи — см. доку GitHub Pages).
 3. В репозитории: **Settings → Pages → Custom domain** → введи домен → дождись проверки → включи **Enforce HTTPS**.
 4. В коде поменяй на новый адрес: `liveUrl` в `src/site.config.ts`, `og:url` в `index.html` и ссылку «Back to harbor» в `public/404.html` (там абсолютный URL — относительный на странице 404 зацикливался бы). Запушь.
 
-Больше ничего трогать не нужно: сборка использует `base: './'` (все пути относительные), поэтому тот же билд одинаково работает и на `55kt.github.io/rndyvisuals/`, и на собственном домене.
+Больше ничего трогать не нужно: сборка использует `base: './'` (все пути относительные), поэтому тот же билд одинаково работает и на `volossoftwaredevelopment.github.io/rndyvisuals/`, и на собственном домене.
 
 ---
 

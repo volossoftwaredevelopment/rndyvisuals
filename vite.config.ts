@@ -43,7 +43,7 @@ function preloadCriticalFonts(): Plugin {
   }
 }
 
-// base './' — сайт работает и на 55kt.github.io/rndyvisuals/, и на кастомном
+// base './' — сайт работает и на volossoftwaredevelopment.github.io/rndyvisuals/, и на кастомном
 // домене без пересборки конфига (миграция = добавить CNAME + настройка Pages).
 export default defineConfig({
   base: './',
