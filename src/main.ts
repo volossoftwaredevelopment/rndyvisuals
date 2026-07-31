@@ -20,8 +20,6 @@ import { mountShell } from './lib/shell'
 import { initMagnetics } from './modules/magnetic'
 import { initReveals } from './modules/reveals'
 import { renderVideoGrid } from './modules/videoGrid'
-import { initShop } from './modules/shop'
-import { initReviews } from './modules/reviews'
 import type { OverlayApi } from './modules/overlayPlayer'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -62,30 +60,26 @@ if (gridMount) {
   renderVideoGrid(gridMount, videos, { reduced, onOpen: (i) => void openOverlay(i) })
 }
 
-// sponsor marquee — names duplicated once for a seamless CSS loop
+// sponsor marquee — logo images; one visible copy + an aria-hidden copy for the
+// seamless CSS loop (the duplicate is hidden under reduced motion)
 const SPONSORS = [
-  'DaVinci Resolve',
-  'Nautor Swan',
-  'Rolex',
-  'BMW',
-  'G-Shock',
-  'Prada',
-  'RainAir',
-  'Sony',
-  'Western Digital',
+  { name: 'DaVinci Resolve', file: 'davinci-resolve.svg' },
+  { name: 'Nautor Swan', file: 'nautor-swan.svg' },
+  { name: 'Rolex', file: 'rolex.svg' },
+  { name: 'BMW', file: 'bmw.svg' },
+  { name: 'G-Shock', file: 'g-shock.svg' },
+  { name: 'Prada', file: 'prada.svg' },
+  { name: 'RainAir', file: 'rainair.svg' },
+  { name: 'Sony', file: 'sony.svg' },
+  { name: 'Western Digital', file: 'western-digital.svg' },
 ]
 const sponsorTrack = document.querySelector<HTMLElement>('[data-sponsors]')
 if (sponsorTrack) {
-  sponsorTrack.setAttribute('aria-hidden', 'true')
-  const seq = SPONSORS.map((s) => `<span class="sponsors__item">${s}</span>`).join('')
-  sponsorTrack.innerHTML = seq + seq
+  const logo = (s: { name: string; file: string }, dup: boolean): string =>
+    `<img class="sponsors__logo${dup ? ' is-dup' : ''}" src="./sponsors/${s.file}" alt="${dup ? '' : s.name}"${dup ? ' aria-hidden="true"' : ''} loading="lazy" />`
+  sponsorTrack.innerHTML =
+    SPONSORS.map((s) => logo(s, false)).join('') + SPONSORS.map((s) => logo(s, true)).join('')
 }
-
-// our products + client reviews
-const shopMount = document.querySelector<HTMLElement>('[data-shop]')
-if (shopMount) initShop(shopMount)
-const reviewsMount = document.querySelector<HTMLElement>('[data-reviews]')
-if (reviewsMount) initReviews(reviewsMount)
 
 /* ----------------------------------------------- matchMedia contexts */
 

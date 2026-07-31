@@ -172,41 +172,37 @@
   transform: scale(1.04);
 }
 
-/* subtle vignette + hover lift on the title */
+/* faint white haze around the edges so the film + title read as one square */
 .tile__media::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(7, 11, 15, 0.35), transparent 40%);
-  opacity: 0;
-  transition: opacity 0.4s var(--ease-out-quart);
+  z-index: 1;
   pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(234, 240, 239, 0.06);
 }
 
-.tile:hover .tile__media::after,
-.tile:focus-visible .tile__media::after {
-  opacity: 1;
-}
-
-.tile__bar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem 1.25rem 1.15rem;
+/* title sits inside the square over a bottom scrim + subtle white glow */
+.tile__cap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  padding: 2.75rem 1.1rem 0.95rem;
+  background:
+    radial-gradient(120% 100% at 50% 130%, rgba(234, 240, 239, 0.14), transparent 60%),
+    linear-gradient(to top, rgba(7, 11, 15, 0.78) 0%, rgba(7, 11, 15, 0.28) 45%, transparent 100%);
 }
 
 .tile__title {
   font-size: var(--fs-micro);
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--ink);
-  transition: color 0.3s var(--ease-out-quart);
-}
-
-.tile:hover .tile__title,
-.tile:focus-visible .tile__title {
   color: var(--ink-hi);
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.55);
+  transition: color 0.3s var(--ease-out-quart);
 }
 
 /* touch play affordance (custom cursor covers fine pointers) */

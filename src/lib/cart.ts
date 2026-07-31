@@ -3,6 +3,7 @@
 
 import { PRODUCTS } from '../data/products'
 import type { Product } from '../data/products'
+import { lockScroll, unlockScroll, trapFocus } from './ui'
 
 const KEY = 'rndy.cart'
 type State = Record<string, number>
@@ -36,7 +37,8 @@ function product(id: string): Product | undefined {
 const money = (n: number): string => `€${n}`
 
 export function count(): number {
-  return Object.values(state).reduce((a, b) => a + b, 0)
+  // only count ids that still resolve to a product (guards stale localStorage)
+  return items().reduce((s, i) => s + i.qty, 0)
 }
 export function items(): Array<{ product: Product; qty: number }> {
   return Object.entries(state)
@@ -78,23 +80,18 @@ function toast(msg: string): void {
   toastTimer = window.setTimeout(() => toastEl?.classList.remove('is-in'), 2200)
 }
 
-type Lenis = { stop: () => void; start: () => void }
-const lenis = (): Lenis | undefined => (window as unknown as { __lenis?: Lenis }).__lenis
-
 function openDrawer(): void {
-  if (!drawer) return
+  if (!drawer || drawer.classList.contains('is-open')) return
   lastFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
   drawer.classList.add('is-open')
-  document.documentElement.classList.add('is-locked')
-  lenis()?.stop()
+  lockScroll()
   renderDrawer()
   drawer.querySelector<HTMLElement>('.cart__close')?.focus({ preventScroll: true })
 }
 function closeDrawer(): void {
-  if (!drawer) return
+  if (!drawer || !drawer.classList.contains('is-open')) return
   drawer.classList.remove('is-open')
-  document.documentElement.classList.remove('is-locked')
-  lenis()?.start()
+  unlockScroll()
   lastFocus?.focus({ preventScroll: true })
 }
 
@@ -152,6 +149,7 @@ export function initCart(): void {
       badge.hidden = c === 0
     }
     btn?.classList.toggle('has-items', c > 0)
+    btn?.setAttribute('aria-label', c > 0 ? `Open cart, ${c} item${c === 1 ? '' : 's'}` : 'Open cart')
   }
   onChange(paint)
   paint()
@@ -172,7 +170,9 @@ export function initCart(): void {
   document.body.appendChild(drawer)
   drawer.querySelectorAll('[data-cart-close]').forEach((el) => el.addEventListener('click', closeDrawer))
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && drawer?.classList.contains('is-open')) closeDrawer()
+    if (!drawer?.classList.contains('is-open')) return
+    if (e.key === 'Escape') closeDrawer()
+    else trapFocus(drawer.querySelector<HTMLElement>('.cart__panel')!, e)
   })
   renderDrawer()
 

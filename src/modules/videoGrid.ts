@@ -56,14 +56,17 @@ export function renderVideoGrid(mount: HTMLElement, videos: VideoEntry[], opts: 
     play.textContent = 'PLAY'
     box.appendChild(play)
 
-    const bar = document.createElement('div')
-    bar.className = 'tile__bar'
+    // title lives INSIDE the tile square (over a subtle scrim + white haze) so
+    // the film and its name read as one block
+    const cap = document.createElement('div')
+    cap.className = 'tile__cap'
     const title = document.createElement('span')
     title.className = 'tile__title'
     title.textContent = entry.title
-    bar.appendChild(title)
+    cap.appendChild(title)
+    box.appendChild(cap)
 
-    tile.append(box, bar)
+    tile.append(box)
     tile.addEventListener('click', () => opts.onOpen(i))
     mount.appendChild(tile)
   })

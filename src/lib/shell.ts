@@ -6,7 +6,7 @@ import { SITE } from '../site.config'
 import { iconLabel } from './icons'
 import { initCart } from './cart'
 
-export type PageId = 'home' | 'about' | 'contact' | 'privacy'
+export type PageId = 'home' | 'products' | 'kind-words' | 'about' | 'contact' | 'privacy'
 
 const COOKIE_KEY = 'rndy.cookie.ok'
 
@@ -18,6 +18,8 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { id: 'home', label: 'Home', href: './' },
+  { id: 'products', label: 'Products', href: './products.html' },
+  { id: 'kind-words', label: 'Kind Words', href: './kind-words.html' },
   { id: 'about', label: 'About', href: './about.html' },
   { id: 'contact', label: 'Contact', href: './contact.html' },
 ]
@@ -37,15 +39,20 @@ function buildHeader(page: PageId): HTMLElement {
   const header = document.createElement('header')
   header.className = 'site-header'
   header.setAttribute('data-header', '')
+  // cart lives only on the Products page (per request)
+  const cart =
+    page === 'products'
+      ? `<button class="cart-btn" type="button" data-cart-toggle aria-label="Open cart">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+      <span class="cart-btn__count" data-cart-count hidden>0</span>
+    </button>`
+      : '<span aria-hidden="true"></span>'
   header.innerHTML = `
     <a class="site-header__brand" href="./" aria-label="${SITE.brand} — home">RNDY<sup>®</sup></a>
     <nav class="site-nav" aria-label="Primary">
       ${NAV.map((n) => navLink(n, n.id === page)).join('')}
     </nav>
-    <button class="cart-btn" type="button" data-cart-toggle aria-label="Open cart">
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
-      <span class="cart-btn__count" data-cart-count hidden>0</span>
-    </button>
+    ${cart}
   `
   return header
 }
@@ -193,7 +200,7 @@ export function mountShell(page: PageId, opts: { footer?: boolean } = {}): Shell
   grain.setAttribute('aria-hidden', 'true')
   document.body.appendChild(grain)
 
-  initCart()
+  if (page === 'products') initCart()
 
   return { header, footer }
 }

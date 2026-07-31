@@ -13,7 +13,7 @@ export function initReviews(mount: HTMLElement): void {
 
   mount.innerHTML = `
     <span class="reviews__mark" aria-hidden="true">&ldquo;</span>
-    <div class="reviews__card" data-card>
+    <div class="reviews__card" data-card aria-live="polite" aria-atomic="true">
       <div class="reviews__stars" data-stars aria-hidden="true"></div>
       <blockquote class="reviews__quote" data-quote></blockquote>
       <div class="reviews__by">
@@ -21,7 +21,7 @@ export function initReviews(mount: HTMLElement): void {
         <span class="reviews__role micro" data-role></span>
       </div>
     </div>
-    <div class="reviews__dots" data-dots role="tablist" aria-label="Choose a testimonial"></div>
+    <div class="reviews__dots" data-dots role="group" aria-label="Choose a testimonial"></div>
   `
 
   const card = mount.querySelector<HTMLElement>('[data-card]')!
@@ -32,7 +32,7 @@ export function initReviews(mount: HTMLElement): void {
   const dotsEl = mount.querySelector<HTMLElement>('[data-dots]')!
 
   dotsEl.innerHTML = REVIEWS.map(
-    (_, i) => `<button type="button" class="reviews__dot" data-i="${i}" role="tab" aria-label="Testimonial ${i + 1}"></button>`,
+    (_, i) => `<button type="button" class="reviews__dot" data-i="${i}" aria-label="Testimonial ${i + 1}"></button>`,
   ).join('')
   const dots = Array.from(dotsEl.querySelectorAll<HTMLButtonElement>('.reviews__dot'))
 
@@ -48,7 +48,8 @@ export function initReviews(mount: HTMLElement): void {
     roleEl.textContent = r.role
     dots.forEach((d, di) => {
       d.classList.toggle('is-on', di === index)
-      d.setAttribute('aria-selected', di === index ? 'true' : 'false')
+      if (di === index) d.setAttribute('aria-current', 'true')
+      else d.removeAttribute('aria-current')
     })
   }
 

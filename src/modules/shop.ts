@@ -1,9 +1,11 @@
-// Our Products — product grid + detail modal (description + pricing + add).
-// Cover art is a generated gradient (--poster-hue), no image files.
+// Our Products — a coverflow carousel (centre product largest, neighbours scale
+// down) with a "View all" catalog toggle, plus a detail modal (description +
+// pricing + add to cart). Cover art is a generated gradient (no image files).
 
 import { PRODUCTS } from '../data/products'
 import type { Product } from '../data/products'
 import { add as addToCart } from '../lib/cart'
+import { lockScroll, unlockScroll, trapFocus } from '../lib/ui'
 
 const money = (n: number): string => `€${n}`
 
@@ -26,9 +28,9 @@ function coverInner(p: Product): string {
   return `<span class="product__grad" aria-hidden="true"></span><span class="product__grain" aria-hidden="true"></span><span class="product__icon" aria-hidden="true">${iconFor(p.category)}</span>`
 }
 
-function card(p: Product): string {
+function cardHTML(p: Product, i: number): string {
   return `
-  <article class="product" data-reveal="fade-up">
+  <article class="product" data-i="${i}">
     <button class="product__cover" data-product="${p.id}" style="--poster-hue:${p.hue}" aria-label="${p.title} — view details">
       ${coverInner(p)}
       <span class="product__badge micro">${p.category}</span>
@@ -42,8 +44,6 @@ function card(p: Product): string {
     </div>
   </article>`
 }
-
-/* ------------------------------------------------------- detail modal */
 
 function buildModal(): HTMLElement {
   const el = document.createElement('div')
@@ -68,23 +68,78 @@ function buildModal(): HTMLElement {
   return el
 }
 
-type Lenis = { stop: () => void; start: () => void }
-const lenis = (): Lenis | undefined => (window as unknown as { __lenis?: Lenis }).__lenis
-
 export function initShop(mount: HTMLElement): void {
-  mount.innerHTML = PRODUCTS.map(card).join('')
+  mount.innerHTML = `
+    <div class="shop__toolbar">
+      <button type="button" class="shop__toggle" data-toggle aria-pressed="false">View all</button>
+    </div>
+    <div class="pcar" data-carousel>
+      <button type="button" class="pcar__nav pcar__prev" data-prev aria-label="Previous product">←</button>
+      <div class="pcar__stage" data-stage>
+        ${PRODUCTS.map((p, i) => cardHTML(p, i)).join('')}
+      </div>
+      <button type="button" class="pcar__nav pcar__next" data-next aria-label="Next product">→</button>
+      <div class="pcar__dots" data-dots role="tablist" aria-label="Products"></div>
+    </div>
+    <div class="shop__grid" data-grid hidden>
+      ${PRODUCTS.map((p, i) => cardHTML(p, i)).join('')}
+    </div>`
 
-  mount.querySelectorAll<HTMLButtonElement>('[data-add]').forEach((b) => {
-    b.addEventListener('click', () => {
-      const id = b.dataset.add
-      if (id) addToCart(id)
+  const stage = mount.querySelector<HTMLElement>('[data-stage]')!
+  const cards = Array.from(stage.querySelectorAll<HTMLElement>('.product'))
+  const dotsEl = mount.querySelector<HTMLElement>('[data-dots]')!
+  const prevBtn = mount.querySelector<HTMLButtonElement>('[data-prev]')!
+  const nextBtn = mount.querySelector<HTMLButtonElement>('[data-next]')!
+  const carousel = mount.querySelector<HTMLElement>('[data-carousel]')!
+  const grid = mount.querySelector<HTMLElement>('[data-grid]')!
+  const toggle = mount.querySelector<HTMLButtonElement>('[data-toggle]')!
+
+  dotsEl.innerHTML = PRODUCTS.map(
+    (_, i) => `<button type="button" class="pcar__dot" data-i="${i}" role="tab" aria-label="Product ${i + 1}"></button>`,
+  ).join('')
+  const dots = Array.from(dotsEl.querySelectorAll<HTMLButtonElement>('.pcar__dot'))
+
+  let active = 0
+
+  const layout = (): void => {
+    cards.forEach((card, i) => {
+      const off = i - active
+      const a = Math.min(Math.abs(off), 3)
+      card.style.transform = `translateX(calc(-50% + ${off * 58}%)) scale(${(1 - a * 0.14).toFixed(3)})`
+      card.style.opacity = String(Math.max(0, 1 - a * 0.34))
+      card.style.zIndex = String(50 - a)
+      card.style.pointerEvents = a > 2 ? 'none' : 'auto'
+      card.setAttribute('aria-hidden', off === 0 ? 'false' : 'true')
+      card.classList.toggle('is-active', off === 0)
     })
+    dots.forEach((d, di) => {
+      d.classList.toggle('is-on', di === active)
+      d.setAttribute('aria-selected', di === active ? 'true' : 'false')
+    })
+    prevBtn.disabled = active === 0
+    nextBtn.disabled = active === cards.length - 1
+  }
+
+  const setActive = (n: number): void => {
+    active = Math.max(0, Math.min(cards.length - 1, n))
+    layout()
+  }
+
+  prevBtn.addEventListener('click', () => setActive(active - 1))
+  nextBtn.addEventListener('click', () => setActive(active + 1))
+  dots.forEach((d) => d.addEventListener('click', () => setActive(Number(d.dataset.i))))
+  carousel.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') setActive(active - 1)
+    if (e.key === 'ArrowRight') setActive(active + 1)
   })
+  layout()
+
+  /* ------------------------------------------------------- detail modal */
 
   const modal = buildModal()
   let lastFocus: HTMLElement | null = null
 
-  const open = (id: string): void => {
+  const openModal = (id: string): void => {
     const p = PRODUCTS.find((x) => x.id === id)
     if (!p) return
     lastFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
@@ -96,32 +151,56 @@ export function initShop(mount: HTMLElement): void {
     q<HTMLElement>('[data-pmodal-title]').textContent = p.title
     q<HTMLElement>('[data-pmodal-price]').textContent = money(p.price)
     q<HTMLElement>('[data-pmodal-blurb]').textContent = p.blurb
-    q<HTMLElement>('[data-pmodal-features]').innerHTML = p.features
-      .map((f) => `<li>${f}</li>`)
-      .join('')
-    const addBtn = q<HTMLButtonElement>('[data-pmodal-add]')
-    addBtn.onclick = (): void => addToCart(p.id)
+    q<HTMLElement>('[data-pmodal-features]').innerHTML = p.features.map((f) => `<li>${f}</li>`).join('')
+    q<HTMLButtonElement>('[data-pmodal-add]').onclick = (): void => addToCart(p.id)
 
     modal.classList.add('is-open')
-    document.documentElement.classList.add('is-locked')
-    lenis()?.stop()
+    lockScroll()
     q<HTMLElement>('.pmodal__close').focus({ preventScroll: true })
   }
 
-  const close = (): void => {
+  const closeModal = (): void => {
+    if (!modal.classList.contains('is-open')) return
     modal.classList.remove('is-open')
-    document.documentElement.classList.remove('is-locked')
-    lenis()?.start()
+    unlockScroll()
     lastFocus?.focus({ preventScroll: true })
   }
 
+  // cover click: in the carousel a side card comes to centre first; the active
+  // card (and any catalog card) opens the modal
   mount.querySelectorAll<HTMLButtonElement>('[data-product]').forEach((b) => {
     b.addEventListener('click', () => {
-      if (b.dataset.product) open(b.dataset.product)
+      const card = b.closest<HTMLElement>('.product')
+      const inStage = card?.parentElement === stage
+      const i = card ? Number(card.dataset.i) : -1
+      // a non-centred carousel card just slides to the middle first
+      if (inStage && i !== active) {
+        setActive(i)
+        return
+      }
+      if (b.dataset.product) openModal(b.dataset.product)
     })
   })
-  modal.querySelectorAll('[data-pmodal-close]').forEach((el) => el.addEventListener('click', close))
+  mount.querySelectorAll<HTMLButtonElement>('[data-add]').forEach((b) => {
+    b.addEventListener('click', () => {
+      if (b.dataset.add) addToCart(b.dataset.add)
+    })
+  })
+  modal.querySelectorAll('[data-pmodal-close]').forEach((el) => el.addEventListener('click', closeModal))
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && modal.classList.contains('is-open')) close()
+    if (!modal.classList.contains('is-open')) return
+    if (e.key === 'Escape') closeModal()
+    else trapFocus(modal.querySelector<HTMLElement>('.pmodal__panel')!, e)
+  })
+
+  /* ------------------------------------------------------ catalog toggle */
+
+  let all = false
+  toggle.addEventListener('click', () => {
+    all = !all
+    carousel.hidden = all
+    grid.hidden = !all
+    toggle.textContent = all ? 'Carousel' : 'View all'
+    toggle.setAttribute('aria-pressed', String(all))
   })
 }
