@@ -188,9 +188,8 @@ if (hashMatch) {
 const heroVideo = document.querySelector<HTMLVideoElement>('.hero__video')
 const heroLine = document.querySelector<HTMLElement>('.hero__brand-line')
 const heroSlogan = document.querySelector<HTMLElement>('.hero__slogan')
-const heroCue = document.querySelector<HTMLElement>('.hero__cue')
 const heroInner = document.querySelector<HTMLElement>('.hero__media-inner')
-const heroFades = [heroSlogan, heroCue].filter(Boolean) as HTMLElement[]
+const heroFades = [heroSlogan].filter(Boolean) as HTMLElement[]
 
 // Pre-hide the hero lockup synchronously at module eval — before first paint —
 // so the wordmark / slogan / video never flash at their final state while

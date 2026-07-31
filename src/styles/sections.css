@@ -2,11 +2,11 @@
 
 /* ------------------------------------------------------------ sponsors */
 
-/* light band so the brand logos (dark + colour) all read, and it stands out */
+/* dark band (dark-mode site); logos normalised to white so any mark reads */
 .sponsors {
-  background: var(--ink-hi);
-  border-top: 1px solid rgba(7, 11, 15, 0.12);
-  border-bottom: 1px solid rgba(7, 11, 15, 0.12);
+  background: var(--surface-2);
+  border-top: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-strong);
 }
 
 .sponsors__viewport {
@@ -37,14 +37,16 @@
   max-width: 210px;
   object-fit: contain;
   margin-right: clamp(3rem, 6vw, 5.5rem);
-  opacity: 0.95;
+  /* white silhouette on the dark band — any uploaded logo stays visible */
+  filter: brightness(0) invert(1);
+  opacity: 0.62;
   transition:
     opacity 0.3s var(--ease-out-quart),
     transform 0.3s var(--ease-out-quart);
 }
 
 .sponsors__logo:hover {
-  opacity: 1;
+  opacity: 0.95;
   transform: scale(1.06);
 }
 
@@ -605,5 +607,50 @@
   .product__add {
     width: 100%;
     text-align: center;
+  }
+}
+
+/* reviews prev/next arrows */
+.reviews__nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  width: 2.75rem;
+  height: 2.75rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink-hi);
+  font-size: 1.05rem;
+  transition: border-color 0.3s var(--ease-out-quart);
+}
+
+.reviews__prev {
+  left: clamp(0.4rem, 1.5vw, 1rem);
+}
+.reviews__next {
+  right: clamp(0.4rem, 1.5vw, 1rem);
+}
+
+.reviews__nav:hover {
+  border-color: var(--accent-dim);
+}
+
+.reviews__stage {
+  touch-action: pan-y;
+}
+
+@media (max-width: 560px) {
+  .reviews__nav {
+    width: 2.4rem;
+    height: 2.4rem;
+    font-size: 0.95rem;
+  }
+  .reviews__stage {
+    padding-left: 3.2rem;
+    padding-right: 3.2rem;
   }
 }

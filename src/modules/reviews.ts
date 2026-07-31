@@ -12,6 +12,8 @@ export function initReviews(mount: HTMLElement): void {
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
   mount.innerHTML = `
+    <button type="button" class="reviews__nav reviews__prev" data-prev aria-label="Previous testimonial">←</button>
+    <button type="button" class="reviews__nav reviews__next" data-next aria-label="Next testimonial">→</button>
     <span class="reviews__mark" aria-hidden="true">&ldquo;</span>
     <div class="reviews__card" data-card aria-live="polite" aria-atomic="true">
       <div class="reviews__stars" data-stars aria-hidden="true"></div>
@@ -82,6 +84,31 @@ export function initReviews(mount: HTMLElement): void {
       start()
     }),
   )
+
+  const step = (dir: number): void => {
+    go(index + dir)
+    start()
+  }
+  mount.querySelector<HTMLButtonElement>('[data-prev]')?.addEventListener('click', () => step(-1))
+  mount.querySelector<HTMLButtonElement>('[data-next]')?.addEventListener('click', () => step(1))
+
+  // swipe (touch + mouse drag)
+  let startX = 0
+  let startY = 0
+  let swiping = false
+  mount.addEventListener('pointerdown', (e) => {
+    startX = e.clientX
+    startY = e.clientY
+    swiping = true
+  })
+  mount.addEventListener('pointerup', (e) => {
+    if (!swiping) return
+    swiping = false
+    const dx = e.clientX - startX
+    const dy = e.clientY - startY
+    if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) step(dx < 0 ? 1 : -1)
+  })
+
   mount.addEventListener('pointerenter', stop)
   mount.addEventListener('pointerleave', start)
   mount.addEventListener('focusin', stop)
