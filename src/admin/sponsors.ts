@@ -228,25 +228,47 @@ export function createSponsorsPanel(ctx: AdminCtx): Panel {
     updateUI()
     setMsg(msg, '')
     try {
-      const clean = list.map((s) => ({ id: s.id, name: s.name.trim(), logo: s.logo }))
+      // normalise names in place, then snapshot at click time (edits made while
+      // the commit is in flight stay in `list` and remain publishable).
+      list.forEach((s) => (s.name = s.name.trim()))
+      const snapshot = list.map((s) => ({ id: s.id, name: s.name, logo: s.logo }))
+
+      // Drift guard: refuse if sponsors.json changed on GitHub since we loaded
+      // it, so a concurrent publish (another tab/device) is not silently reverted.
+      const remote = await fetchTextFile(ctx.token(), MANIFEST)
+      let remoteSponsors: unknown = null
+      try {
+        remoteSponsors = (JSON.parse(remote.text) as { sponsors?: unknown }).sponsors
+      } catch {
+        /* unparseable remote — treat as drift below */
+      }
+      if (JSON.stringify(remoteSponsors) !== JSON.stringify(JSON.parse(baseline))) {
+        throw new Error('The sponsors changed on GitHub in another session — reload the page and re-apply your changes.')
+      }
+
       const files: CommitFile[] = [
         {
           path: MANIFEST,
-          content: `${JSON.stringify({ sponsors: clean }, null, 2)}\n`,
+          content: `${JSON.stringify({ sponsors: snapshot }, null, 2)}\n`,
           encoding: 'utf-8',
         },
       ]
       // only commit logos still referenced by a surviving sponsor
-      const referenced = new Set(clean.map((s) => s.logo))
+      const referenced = new Set(snapshot.map((s) => s.logo))
+      const committed = new Set<string>()
       for (const [logo, data] of staged) {
         if (referenced.has(logo)) {
           files.push({ path: `${LOGO_DIR}/${logo}`, content: data.base64, encoding: 'base64' })
+          committed.add(logo)
         }
       }
       await commitFiles(ctx.token(), files, 'content: update sponsors via admin')
-      list = clean
-      staged.clear()
-      baseline = serialize()
+      baseline = JSON.stringify(snapshot)
+      // drop committed + orphaned staged logos; keep any staged mid-publish
+      const live = new Set(list.map((s) => s.logo))
+      for (const logo of [...staged.keys()]) {
+        if (committed.has(logo) || !live.has(logo)) staged.delete(logo)
+      }
       render()
       setMsg(msg, 'Published — the site is rebuilding now.', 'ok')
       afterPublish()

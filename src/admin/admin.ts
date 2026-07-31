@@ -8,14 +8,15 @@ import '../styles/tokens.css'
 import './admin.css'
 
 import { SITE } from '../site.config'
-import { fetchManifest, publishManifest, validateToken } from './github'
+import { commitFiles, fetchManifest, fetchTextFile, validateToken } from './github'
+import type { CommitFile } from './github'
 import { afterPublish, initDeploy, refreshDeploy, resetDeploy } from './deploy'
 import { fetchOEmbedTitle, parseVideoUrl } from './oembed'
 import { attachListDnd } from './dnd'
 import { createContactsPanel } from './contacts'
 import { createSponsorsPanel } from './sponsors'
 import type { AdminCtx, Panel } from './panel'
-import type { Manifest, SourceType, VideoEntry } from './types'
+import type { SourceType, VideoEntry } from './types'
 
 const TOKEN_KEY = 'rndy.admin.token'
 
@@ -39,6 +40,8 @@ const ui = {
   rows: $<HTMLOListElement>('#rows'),
   addUrl: $<HTMLInputElement>('#add-url'),
   addBtn: $<HTMLButtonElement>('#add-btn'),
+  addFile: $<HTMLButtonElement>('#add-file'),
+  addFileInput: $<HTMLInputElement>('#add-file-input'),
   addBlank: $<HTMLButtonElement>('#add-blank'),
   addMsg: $('#add-msg'),
   publishBtn: $<HTMLButtonElement>('#publish-btn'),
@@ -50,7 +53,6 @@ const ui = {
 const state = {
   token: '',
   tokenValid: false,
-  sha: '',
   baseline: [] as VideoEntry[], // last loaded/published manifest — diff target
   videos: [] as VideoEntry[], // working copy bound to the UI
   publishing: false,
@@ -64,6 +66,145 @@ const ctx: AdminCtx = {
 const contactsPanel = createContactsPanel(ctx)
 const sponsorsPanel = createSponsorsPanel(ctx)
 const extraPanels: Panel[] = [contactsPanel, sponsorsPanel]
+
+/* ----------------------------- media staging ------------------------------ */
+// Uploaded clips (and their auto-generated posters) are held in memory until
+// Publish, then committed alongside videos.json in ONE commit.
+
+const MEDIA_DIR = 'public/media'
+const MAX_VIDEO_BYTES = 60 * 1024 * 1024
+const OK_VIDEO = /^video\/(mp4|webm|quicktime)$/
+
+interface StagedFile {
+  base64: string
+  /** data: URL for a poster preview (posters only) */
+  dataUrl?: string
+}
+
+// keyed by repo path, e.g. "public/media/film-a1b2.mp4"
+const stagedMedia = new Map<string, StagedFile>()
+
+/** './media/x.mp4' -> 'public/media/x.mp4' */
+function toRepoPath(siteUrl: string): string {
+  return `${MEDIA_DIR}/${siteUrl.split('/').pop() ?? ''}`
+}
+
+// Cheap, deterministic content tag: same file -> same name (idempotent + cache
+// busting), different file -> different name. Sampled so 60 MB stays instant.
+function shortHash(s: string): string {
+  let h = 2166136261 >>> 0
+  const step = Math.max(1, Math.floor(s.length / 4096))
+  for (let i = 0; i < s.length; i += step) {
+    h ^= s.charCodeAt(i)
+    h = Math.imul(h, 16777619) >>> 0
+  }
+  h ^= s.length
+  return (h >>> 0).toString(36)
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let bin = ''
+  const chunk = 0x8000
+  for (let i = 0; i < bytes.length; i += chunk) {
+    bin += String.fromCharCode(...bytes.subarray(i, i + chunk))
+  }
+  return btoa(bin)
+}
+
+// Keep the real container extension so GitHub Pages serves the right MIME.
+function videoExt(file: File): string {
+  const fromName = file.name.split('.').pop()?.toLowerCase() ?? ''
+  if (fromName === 'webm') return 'webm'
+  if (fromName === 'mov') return 'mov'
+  if (fromName === 'mp4' || fromName === 'm4v') return 'mp4'
+  if (file.type === 'video/webm') return 'webm'
+  if (file.type === 'video/quicktime') return 'mov'
+  return 'mp4'
+}
+
+/** Draw a frame ~a quarter in as a JPEG poster. Resolves null if it can't. */
+function posterFromVideo(file: File): Promise<{ base64: string; dataUrl: string } | null> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file)
+    const v = document.createElement('video')
+    v.muted = true
+    v.preload = 'auto'
+    v.src = url
+    let settled = false
+    let timer = 0
+    const done = (out: { base64: string; dataUrl: string } | null): void => {
+      if (settled) return
+      settled = true
+      if (timer) window.clearTimeout(timer)
+      URL.revokeObjectURL(url)
+      resolve(out)
+    }
+    // Watchdog: a clip that decodes but never fires 'seeked' (or never loads at
+    // all) must not hang the whole staging flow — fall back to no poster.
+    timer = window.setTimeout(() => done(null), 8000)
+    const grab = (): void => {
+      const w = v.videoWidth
+      const h = v.videoHeight
+      if (!w || !h) return done(null)
+      const scale = Math.min(1, 1280 / w)
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.round(w * scale)
+      canvas.height = Math.round(h * scale)
+      const g = canvas.getContext('2d')
+      if (!g) return done(null)
+      try {
+        g.drawImage(v, 0, 0, canvas.width, canvas.height)
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.82)
+        done({ base64: dataUrl.split(',')[1] ?? '', dataUrl })
+      } catch {
+        done(null)
+      }
+    }
+    v.addEventListener('error', () => done(null), { once: true })
+    v.addEventListener(
+      'loadeddata',
+      () => {
+        v.addEventListener('seeked', grab, { once: true })
+        try {
+          v.currentTime = Math.min(1, (v.duration || 2) * 0.25)
+        } catch {
+          grab()
+        }
+      },
+      { once: true },
+    )
+  })
+}
+
+/**
+ * Read a chosen video file, generate its poster, and stage both. Returns the
+ * site-relative { url, poster } to store on the entry, or an error string.
+ * Never throws — an unreadable file surfaces as an error string.
+ */
+async function stageVideo(file: File, seed: string): Promise<{ url: string; poster: string } | string> {
+  if (file.type && !OK_VIDEO.test(file.type)) return 'Use an MP4 (H.264), WebM or MOV file.'
+  if (file.size > MAX_VIDEO_BYTES) {
+    return `That file is ${(file.size / 1024 / 1024).toFixed(0)} MB — keep clips under 60 MB (web-encode first).`
+  }
+  try {
+    const base = slugify(seed) || 'film'
+    const ext = videoExt(file)
+    const bytes = new Uint8Array(await file.arrayBuffer())
+    const b64 = bytesToBase64(bytes)
+    const tag = shortHash(b64)
+    stagedMedia.set(`${MEDIA_DIR}/${base}-${tag}.${ext}`, { base64: b64 })
+
+    const poster = await posterFromVideo(file)
+    let posterUrl = ''
+    if (poster) {
+      stagedMedia.set(`${MEDIA_DIR}/${base}-${tag}.jpg`, { base64: poster.base64, dataUrl: poster.dataUrl })
+      posterUrl = `./media/${base}-${tag}.jpg`
+    }
+    return { url: `./media/${base}-${tag}.${ext}`, poster: posterUrl }
+  } catch {
+    return 'Could not read that file — try again, or choose a different one.'
+  }
+}
 
 /* ---------------------------------- utils ---------------------------------- */
 
@@ -160,14 +301,13 @@ const ROW_HTML = `
     <div class="row-top">
       <input class="f-title" data-field="title" placeholder="Title" spellcheck="false" aria-label="Title" />
       <span class="badge" data-badge></span>
-      <button class="star" type="button" data-act="featured">★</button>
       <button class="x" type="button" data-act="delete" title="Delete" aria-label="Delete">×</button>
     </div>
-    <div class="row-meta">
-      <input class="f-client" data-field="client" placeholder="Client" spellcheck="false" aria-label="Client" />
-      <input class="f-category" data-field="category" placeholder="Category" spellcheck="false" aria-label="Category" />
-      <input class="f-duration" data-field="duration" placeholder="0:00" spellcheck="false" aria-label="Duration" />
-      <input class="f-year" data-field="year" inputmode="numeric" placeholder="2026" aria-label="Year" />
+    <div class="row-media">
+      <span class="vid-thumb"><img alt="" data-thumb hidden /></span>
+      <button type="button" class="btn btn--ghost btn--sm vid-replace" data-act="replace-video-btn">Replace video</button>
+      <input type="file" accept="video/mp4,video/webm,video/quicktime" hidden data-act="replace-video" />
+      <span class="vid-status" data-status aria-live="polite"></span>
       <span class="row-updown">
         <button type="button" data-act="up" title="Move up" aria-label="Move up">▲</button>
         <button type="button" data-act="down" title="Move down" aria-label="Move down">▼</button>
@@ -175,6 +315,11 @@ const ROW_HTML = `
     </div>
   </div>
 `
+
+function previewPoster(poster: string): string {
+  if (!poster) return ''
+  return stagedMedia.get(toRepoPath(poster))?.dataUrl ?? poster
+}
 
 function buildRow(video: VideoEntry, index: number, total: number): HTMLLIElement {
   const li = document.createElement('li')
@@ -184,15 +329,13 @@ function buildRow(video: VideoEntry, index: number, total: number): HTMLLIElemen
   const q = <T extends HTMLElement>(sel: string): T => li.querySelector(sel) as unknown as T
   q('.row-index').textContent = String(index + 1).padStart(2, '0')
   q<HTMLInputElement>('[data-field="title"]').value = video.title
-  q<HTMLInputElement>('[data-field="client"]').value = video.client
-  q<HTMLInputElement>('[data-field="category"]').value = video.category
-  q<HTMLInputElement>('[data-field="duration"]').value = video.duration
-  q<HTMLInputElement>('[data-field="year"]').value = String(video.year)
   q('[data-badge]').textContent = BADGE[video.source.type]
-  const star = q<HTMLButtonElement>('[data-act="featured"]')
-  star.classList.toggle('is-on', video.featured)
-  star.setAttribute('aria-pressed', String(video.featured))
-  star.title = video.featured ? 'In the showreel — click to remove' : 'Click to feature in the showreel'
+  const thumb = q<HTMLImageElement>('[data-thumb]')
+  const src = previewPoster(video.poster)
+  if (src) {
+    thumb.src = src
+    thumb.hidden = false
+  }
   q<HTMLButtonElement>('[data-act="up"]').disabled = index === 0
   q<HTMLButtonElement>('[data-act="down"]').disabled = index === total - 1
   return li
@@ -284,8 +427,8 @@ async function loadVideos(): Promise<void> {
   ui.videosRetry.hidden = true
   setMsg(ui.videosMsg, 'Loading videos…', 'info')
   try {
-    const { manifest, sha } = await fetchManifest(state.token)
-    state.sha = sha
+    const { manifest } = await fetchManifest(state.token)
+    stagedMedia.clear()
     state.baseline = manifest.videos
     state.videos = structuredClone(manifest.videos)
     setMsg(ui.videosMsg, '')
@@ -301,9 +444,9 @@ function forgetToken(): void {
   localStorage.removeItem(TOKEN_KEY)
   state.token = ''
   state.tokenValid = false
-  state.sha = ''
   state.baseline = []
   state.videos = []
+  stagedMedia.clear()
   ui.tokenInput.value = ''
   ui.tokenDot.classList.remove('is-valid')
   ui.tokenForget.hidden = true
@@ -343,12 +486,42 @@ async function addFromUrl(): Promise<void> {
   appendEntry({
     id: uniqueId(title || `${parsed.type}-${parsed.id}`),
     title,
-    client: '',
-    category: '',
-    year: new Date().getFullYear(),
-    duration: '',
     source: { type: parsed.type, id: parsed.id },
     poster: '',
+    featured: false,
+  })
+}
+
+// Prettify a filename into a title: "viva_la-malta.mp4" -> "Viva La Malta"
+function titleFromFilename(name: string): string {
+  return name
+    .replace(/\.[^.]+$/, '')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+async function addFromFile(file: File): Promise<void> {
+  const title = titleFromFilename(file.name)
+  setBusy(ui.addFile, true)
+  setMsg(ui.addMsg, 'Reading the video…', 'info')
+  const staged = await stageVideo(file, title || 'film')
+  setBusy(ui.addFile, false)
+  if (typeof staged === 'string') {
+    setMsg(ui.addMsg, staged, 'error')
+    return
+  }
+  setMsg(
+    ui.addMsg,
+    staged.poster ? '' : 'Added — a poster frame could not be read, so the tile will be blank until it plays.',
+    staged.poster ? 'info' : 'info',
+  )
+  appendEntry({
+    id: uniqueId(title || 'new-film'),
+    title,
+    source: { type: 'file', url: staged.url },
+    poster: staged.poster,
     featured: false,
   })
 }
@@ -358,17 +531,56 @@ function addBlankPlaceholder(): void {
   appendEntry({
     id: uniqueId('new-film'),
     title: '',
-    client: '',
-    category: '',
-    year: new Date().getFullYear(),
-    duration: '',
     source: { type: 'placeholder' },
     poster: '',
     featured: false,
   })
 }
 
+// Free a row's previously-staged (not-yet-published) bytes, but never the ones
+// we just staged for it (guards the same-file re-pick case).
+function freeStaged(url: string | undefined, poster: string, keep: Set<string>): void {
+  for (const u of [url, poster]) {
+    if (!u) continue
+    const path = toRepoPath(u)
+    if (!keep.has(path)) stagedMedia.delete(path)
+  }
+}
+
+async function replaceVideo(id: string, file: File, statusEl: HTMLElement | null): Promise<void> {
+  const found = state.videos.find((v) => v.id === id)
+  if (!found) return
+  if (statusEl) statusEl.textContent = 'Reading…'
+  const staged = await stageVideo(file, found.title || found.id)
+  if (typeof staged === 'string') {
+    setMsg(ui.addMsg, staged, 'error')
+    if (statusEl) statusEl.textContent = ''
+    return
+  }
+  const keep = new Set([toRepoPath(staged.url), ...(staged.poster ? [toRepoPath(staged.poster)] : [])])
+  freeStaged(found.source.type === 'file' ? found.source.url : undefined, found.poster, keep)
+  found.source = { type: 'file', url: staged.url }
+  found.poster = staged.poster
+  renderRows()
+  updatePublishUI()
+  // renderRows() recreates the status node; set it next frame so the live region announces
+  requestAnimationFrame(() => {
+    const s = ui.rows.querySelector<HTMLElement>(`.row[data-id="${id}"] [data-status]`)
+    if (s) s.textContent = staged.poster ? 'New clip staged' : 'New clip staged (no poster)'
+  })
+}
+
 /* --------------------------------- publishing -------------------------------- */
+
+// media repo paths referenced by a set of entries (video url + poster)
+function referencedMedia(entries: VideoEntry[]): Set<string> {
+  const set = new Set<string>()
+  for (const v of entries) {
+    if (v.source.type === 'file' && v.source.url) set.add(toRepoPath(v.source.url))
+    if (v.poster) set.add(toRepoPath(v.poster))
+  }
+  return set
+}
 
 async function publish(): Promise<void> {
   if (state.publishing || !state.tokenValid || !isDirty()) return
@@ -378,9 +590,45 @@ async function publish(): Promise<void> {
   try {
     // Snapshot at click time: edits made while the request is in flight must
     // stay dirty rather than being absorbed into the baseline unpublished.
-    const manifest: Manifest = { videos: structuredClone(state.videos) }
-    state.sha = await publishManifest(state.token, manifest, state.sha, { videos: state.baseline })
-    state.baseline = manifest.videos
+    const videos = structuredClone(state.videos)
+
+    // Drift guard: refuse if videos.json changed on GitHub since we loaded it,
+    // so a concurrent publish (another tab/device) is not silently reverted.
+    const remote = await fetchTextFile(state.token, SITE.manifestRepoPath)
+    let remoteVideos: unknown = null
+    try {
+      remoteVideos = (JSON.parse(remote.text) as { videos?: unknown }).videos
+    } catch {
+      /* unparseable remote — treat as drift below */
+    }
+    if (JSON.stringify(remoteVideos) !== JSON.stringify(state.baseline)) {
+      throw new Error('The videos changed on GitHub in another session — reload the page and re-apply your changes.')
+    }
+
+    const files: CommitFile[] = [
+      {
+        path: SITE.manifestRepoPath,
+        content: `${JSON.stringify({ videos }, null, 2)}\n`,
+        encoding: 'utf-8',
+      },
+    ]
+    // commit only uploaded media still referenced by a surviving entry
+    const referenced = referencedMedia(videos)
+    const committed = new Set<string>()
+    for (const [path, file] of stagedMedia) {
+      if (referenced.has(path)) {
+        files.push({ path, content: file.base64, encoding: 'base64' })
+        committed.add(path)
+      }
+    }
+    await commitFiles(state.token, files, 'content: update videos via admin')
+    state.baseline = videos
+    // Drop what we just committed and any staged media the working copy no longer
+    // references — but KEEP media staged mid-publish (referenced, not yet committed).
+    const live = referencedMedia(state.videos)
+    for (const path of [...stagedMedia.keys()]) {
+      if (committed.has(path) || !live.has(path)) stagedMedia.delete(path)
+    }
     setMsg(ui.publishMsg, 'Published — the site is rebuilding now.', 'ok')
     afterPublish()
   } catch (err) {
@@ -444,15 +692,13 @@ function bindEvents(): void {
     if (!found) return
     const { video, index } = found
     const act = btn.dataset.act
-    if (act === 'featured') {
-      video.featured = !video.featured
-      btn.classList.toggle('is-on', video.featured)
-      btn.setAttribute('aria-pressed', String(video.featured))
-      btn.title = video.featured ? 'In the showreel — click to remove' : 'Click to feature in the showreel'
-      updatePublishUI()
+    if (act === 'replace-video-btn') {
+      // bridge the focusable button to its sibling hidden file input (keyboard a11y)
+      btn.closest('.row-media')?.querySelector<HTMLInputElement>('input[data-act="replace-video"]')?.click()
     } else if (act === 'delete') {
       const name = video.title.trim() || video.id
       if (window.confirm(`Delete “${name}”? It disappears from the site on the next publish.`)) {
+        freeStaged(video.source.type === 'file' ? video.source.url : undefined, video.poster, new Set())
         state.videos.splice(index, 1)
         renderRows()
         updatePublishUI()
@@ -468,48 +714,32 @@ function bindEvents(): void {
 
   ui.rows.addEventListener('input', (e) => {
     const input = e.target as HTMLInputElement
-    const field = input.dataset.field
-    if (!field) return
+    if (input.dataset.field !== 'title') return
     const found = entryFromNode(input)
     if (!found) return
-    const { video } = found
-    if (field === 'title') video.title = input.value
-    else if (field === 'client') video.client = input.value
-    else if (field === 'category') video.category = input.value
-    else if (field === 'duration') video.duration = input.value
-    else if (field === 'year') {
-      const n = Number.parseInt(input.value, 10)
-      if (Number.isFinite(n)) video.year = n
-    }
+    found.video.title = input.value
     updatePublishUI()
   })
 
-  // Normalize on blur: trim text fields, snap year back to the stored number,
-  // softly mark a duration that is not m:ss.
   ui.rows.addEventListener('change', (e) => {
-    const input = e.target as HTMLInputElement
-    const field = input.dataset.field
-    if (!field) return
+    const input = e.target
+    if (!(input instanceof HTMLInputElement)) return
+    // a chosen replacement clip (file picker on the row)
+    if (input.dataset.act === 'replace-video') {
+      const id = input.closest<HTMLElement>('.row')?.dataset.id
+      const file = input.files?.[0]
+      const statusEl = input.closest<HTMLElement>('.row')?.querySelector<HTMLElement>('[data-status]') ?? null
+      if (id && file) void replaceVideo(id, file, statusEl)
+      input.value = '' // let the same file be re-picked later
+      return
+    }
+    // trim the title on blur
+    if (input.dataset.field !== 'title') return
     const found = entryFromNode(input)
     if (!found) return
-    const { video } = found
     const trimmed = input.value.trim()
-    if (field === 'title') {
-      video.title = trimmed
-      input.value = trimmed
-    } else if (field === 'client') {
-      video.client = trimmed
-      input.value = trimmed
-    } else if (field === 'category') {
-      video.category = trimmed
-      input.value = trimmed
-    } else if (field === 'duration') {
-      video.duration = trimmed
-      input.value = trimmed
-      input.classList.toggle('is-invalid', trimmed !== '' && !/^\d{1,3}:\d{2}$/.test(trimmed))
-    } else if (field === 'year') {
-      input.value = String(video.year)
-    }
+    found.video.title = trimmed
+    input.value = trimmed
     updatePublishUI()
   })
 
@@ -523,6 +753,12 @@ function bindEvents(): void {
       e.preventDefault()
       void addFromUrl()
     }
+  })
+  ui.addFile.addEventListener('click', () => ui.addFileInput.click())
+  ui.addFileInput.addEventListener('change', () => {
+    const file = ui.addFileInput.files?.[0]
+    if (file) void addFromFile(file)
+    ui.addFileInput.value = '' // allow re-picking the same file
   })
   ui.addBlank.addEventListener('click', addBlankPlaceholder)
 

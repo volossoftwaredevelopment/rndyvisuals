@@ -24,7 +24,10 @@ function friendlyStatus(res: Response): string {
     return 'Access denied — the token needs “Contents: Read and write” plus “Actions: Read-only” on this repository.'
   }
   if (res.status === 404) return 'Repository or file not found — check the token can see this repository.'
-  if (res.status === 409) return 'The file changed on GitHub while you were editing.'
+  if (res.status === 409 || res.status === 422) {
+    return 'The content changed on GitHub while you were editing — reload the page and re-apply your changes.'
+  }
+  if (res.status === 413) return 'That upload is too large for GitHub — use a smaller, web-encoded file.'
   return `GitHub returned an unexpected error (${res.status}) — try again.`
 }
 
@@ -131,20 +134,19 @@ export async function commitFiles(token: string, files: CommitFile[], message: s
   const headSha = ref.object.sha
   const headCommit = await api<CommitResponse>(token, `/repos/${REPO}/git/commits/${headSha}`)
 
-  const blobs = await Promise.all(
-    files.map((f) =>
-      api<ShaResponse>(token, `/repos/${REPO}/git/blobs`, {
-        method: 'POST',
-        body: JSON.stringify({ content: f.content, encoding: f.encoding }),
-      }),
-    ),
-  )
+  // Upload blobs one at a time — a batch of large video payloads uploaded
+  // concurrently would hold several multi-MB request bodies in memory at once.
+  const treeItems: Array<{ path: string; mode: '100644'; type: 'blob'; sha: string }> = []
+  for (const f of files) {
+    const blob = await api<ShaResponse>(token, `/repos/${REPO}/git/blobs`, {
+      method: 'POST',
+      body: JSON.stringify({ content: f.content, encoding: f.encoding }),
+    })
+    treeItems.push({ path: f.path, mode: '100644', type: 'blob', sha: blob.sha })
+  }
   const tree = await api<ShaResponse>(token, `/repos/${REPO}/git/trees`, {
     method: 'POST',
-    body: JSON.stringify({
-      base_tree: headCommit.tree.sha,
-      tree: files.map((f, i) => ({ path: f.path, mode: '100644', type: 'blob', sha: blobs[i].sha })),
-    }),
+    body: JSON.stringify({ base_tree: headCommit.tree.sha, tree: treeItems }),
   })
   const commit = await api<ShaResponse>(token, `/repos/${REPO}/git/commits`, {
     method: 'POST',
@@ -193,46 +195,6 @@ export async function fetchManifest(token: string): Promise<LoadedManifest> {
 
 interface PutContentsResponse {
   content: { sha: string }
-}
-
-/**
- * Commits the manifest. On a 409 (sha drift) the remote file is refetched and
- * the PUT retried only when the remote content still matches `baseline` — i.e.
- * the drift came from a branch race, not a real edit. A genuine remote change
- * surfaces as a conflict error instead of silent last-write-wins.
- */
-export async function publishManifest(
-  token: string,
-  manifest: Manifest,
-  sha: string,
-  baseline: Manifest,
-): Promise<string> {
-  const content = encodeBase64Utf8(`${JSON.stringify(manifest, null, 2)}\n`)
-  const put = (currentSha: string): Promise<PutContentsResponse> =>
-    api<PutContentsResponse>(token, `/repos/${REPO}/contents/${SITE.manifestRepoPath}`, {
-      method: 'PUT',
-      body: JSON.stringify({
-        message: 'content: update videos via admin',
-        content,
-        sha: currentSha,
-        branch: SITE.branch,
-      }),
-    })
-  try {
-    return (await put(sha)).content.sha
-  } catch (err) {
-    if (err instanceof GitHubError && err.status === 409) {
-      const fresh = await fetchManifest(token)
-      if (JSON.stringify(fresh.manifest) === JSON.stringify(baseline)) {
-        return (await put(fresh.sha)).content.sha
-      }
-      throw new GitHubError(
-        409,
-        'The videos changed on GitHub while you were editing — reload the page and re-apply your changes.',
-      )
-    }
-    throw err
-  }
 }
 
 export type DeployState = 'none' | 'queued' | 'building' | 'live' | 'failed'

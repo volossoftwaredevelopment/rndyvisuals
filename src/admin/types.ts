@@ -1,4 +1,6 @@
-// Manifest types — exact mirror of docs/DESIGN_SPEC.md §10 (src/data/videos.json).
+// Manifest types — mirror of src/types.ts (src/data/videos.json). The live site
+// shows the title only; client/category/year/duration feed the generated
+// placeholder art and are optional, kept here so the admin round-trips them.
 
 export type SourceType = 'placeholder' | 'youtube' | 'vimeo' | 'file'
 
@@ -13,13 +15,14 @@ export interface VideoSource {
 export interface VideoEntry {
   id: string
   title: string
-  client: string
-  category: string
-  year: number
-  duration: string
   source: VideoSource
   poster: string
   featured: boolean
+  caption?: string
+  client?: string
+  category?: string
+  year?: number
+  duration?: string
 }
 
 export interface Manifest {

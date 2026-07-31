@@ -76,12 +76,24 @@
                   spellcheck="false"
                   aria-label="Video link"
                 />
-                <button id="add-btn" class="btn" type="button">Add video</button>
+                <button id="add-btn" class="btn" type="button">Add link</button>
               </div>
               <div class="add-foot">
-                <button id="add-blank" class="btn btn--ghost" type="button">+ Add a blank placeholder instead</button>
+                <button id="add-file" class="btn btn--ghost" type="button">↑ Upload a video file</button>
+                <button id="add-blank" class="btn btn--ghost" type="button">+ Blank placeholder</button>
               </div>
-              <p class="msg" id="add-msg" hidden></p>
+              <input
+                id="add-file-input"
+                type="file"
+                accept="video/mp4,video/webm,video/quicktime"
+                hidden
+                aria-hidden="true"
+              />
+              <p class="help">
+                Upload a web-encoded <strong>MP4 (H.264)</strong> under 60 MB — a poster frame is generated
+                automatically. Or use “Replace video” on a row to swap an existing film.
+              </p>
+              <p class="msg" id="add-msg" role="status" aria-live="polite" hidden></p>
             </div>
             <p class="msg" id="publish-msg" hidden></p>
           </section>
@@ -198,7 +210,7 @@
                 </label>
                 <button id="sponsor-add-btn" class="btn" type="button">Add sponsor</button>
               </div>
-              <p class="msg" id="sponsor-add-msg" hidden></p>
+              <p class="msg" id="sponsor-add-msg" role="status" aria-live="polite" hidden></p>
             </div>
           </section>
         </div>
