@@ -16,7 +16,6 @@ import Lenis from 'lenis'
 import rawManifest from './data/videos.json'
 import type { Manifest } from './types'
 import { mountShell } from './lib/shell'
-import { initCursor } from './modules/cursor'
 import { initMagnetics } from './modules/magnetic'
 import { initReveals } from './modules/reveals'
 import { renderVideoGrid } from './modules/videoGrid'
@@ -99,7 +98,6 @@ mm.add(
     }
 
     if (c.fine && c.motionOk) {
-      cleanups.push(initCursor())
       cleanups.push(initMagnetics())
     }
 

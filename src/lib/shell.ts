@@ -40,7 +40,6 @@ function buildHeader(page: PageId): HTMLElement {
     <nav class="site-nav" aria-label="Primary">
       ${NAV.map((n) => navLink(n, n.id === page)).join('')}
     </nav>
-    <a class="site-header__wa" href="${SITE.whatsappLink}" target="_blank" rel="noopener noreferrer">WhatsApp<span class="sr-only"> (opens in a new tab)</span></a>
   `
   return header
 }
@@ -50,15 +49,25 @@ function buildFooter(): HTMLElement {
   footer.className = 'site-footer'
   footer.innerHTML = `
     <span class="rule-line" data-reveal="rule" aria-hidden="true"></span>
-    <div class="site-footer__bar">
-      <span class="site-footer__brand">RNDY<sup>®</sup></span>
-      <nav class="site-footer__links micro" aria-label="Footer">
+    <div class="site-footer__grid">
+      <div class="site-footer__col site-footer__brandcol">
+        <span class="site-footer__brand">RNDY VISUALS<sup>®</sup></span>
+        <p class="site-footer__tag micro">Videography — available worldwide</p>
+      </div>
+
+      <nav class="site-footer__col" aria-label="Contact">
+        <h2 class="site-footer__h micro">Contact</h2>
         <a href="${SITE.instagram}" target="_blank" rel="noopener noreferrer">Instagram<span class="sr-only"> (opens in a new tab)</span></a>
         <a href="${SITE.youtube}" target="_blank" rel="noopener noreferrer">YouTube<span class="sr-only"> (opens in a new tab)</span></a>
-        <a href="./privacy.html">Privacy&nbsp;Policy</a>
+        <a href="${SITE.whatsappLink}" target="_blank" rel="noopener noreferrer">WhatsApp<span class="sr-only"> (opens in a new tab)</span></a>
+        <a href="mailto:${SITE.email}">Email</a>
       </nav>
-      <div class="site-footer__meta micro">
-        <span>© 2026 rndyvisuals</span>
+
+      <div class="site-footer__col">
+        <h2 class="site-footer__h micro">Info</h2>
+        <span class="site-footer__copy">© 2026 RNDY VISUALS</span>
+        <a href="./privacy.html">Privacy Policy</a>
+        <a class="site-footer__credit" href="${SITE.creditUrl}" target="_blank" rel="noopener noreferrer">Made with ${SITE.credit}<span class="sr-only"> (opens in a new tab)</span></a>
         <button type="button" class="site-footer__top" data-to-top>Back to top</button>
       </div>
     </div>

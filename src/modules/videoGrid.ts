@@ -25,7 +25,19 @@ export function renderVideoGrid(mount: HTMLElement, videos: VideoEntry[], opts: 
     const box = document.createElement('div')
     box.className = 'tile__media'
 
+    // Always render the poster as its own always-visible layer. (Putting it only
+    // on the <video>'s poster attr fails when autoplay is blocked or slow: the
+    // video sits at opacity 0 until it plays, so the poster on it is invisible
+    // too and the tile shows blank.) The video fades in on top when it plays.
     const poster = entry.poster || ''
+    if (poster) {
+      const img = document.createElement('img')
+      img.className = 'tile__poster'
+      img.src = poster
+      img.alt = ''
+      img.loading = 'lazy'
+      box.appendChild(img)
+    }
     if (entry.source.type === 'file' && entry.source.url) {
       const video = document.createElement('video')
       video.className = 'tile__video'
@@ -33,17 +45,9 @@ export function renderVideoGrid(mount: HTMLElement, videos: VideoEntry[], opts: 
       video.loop = true
       video.playsInline = true
       video.preload = 'none'
-      if (poster) video.poster = poster
       video.dataset.src = entry.source.url
       box.appendChild(video)
       media.push(video)
-    } else if (poster) {
-      const img = document.createElement('img')
-      img.className = 'tile__poster'
-      img.src = poster
-      img.alt = ''
-      img.loading = 'lazy'
-      box.appendChild(img)
     }
 
     const play = document.createElement('span')
@@ -130,6 +134,20 @@ export function renderVideoGrid(mount: HTMLElement, videos: VideoEntry[], opts: 
   )
 
   media.forEach((v) => io.observe(v))
+
+  // If the browser blocked muted autoplay, retry the in-view videos on the
+  // first user gesture (scroll/click/key) — the poster shows until then.
+  const unlock = (): void => {
+    inView.forEach((v) =>
+      v
+        .play()
+        .then(() => v.closest('.tile')?.classList.add('is-playing'))
+        .catch(() => {}),
+    )
+  }
+  ;(['pointerdown', 'touchstart', 'keydown', 'wheel'] as const).forEach((ev) =>
+    window.addEventListener(ev, unlock, { once: true, passive: true }),
+  )
 
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {

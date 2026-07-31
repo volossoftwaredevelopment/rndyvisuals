@@ -131,6 +131,11 @@
   width: 100%;
   text-align: left;
   background: var(--bg);
+  /* creative static "play" cursor over the films — no JS, no animation */
+  cursor:
+    url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='32'%20height='32'%3E%3Ccircle%20cx='16'%20cy='16'%20r='14'%20fill='%23070B0F'%20fill-opacity='0.5'%20stroke='%23EAF0EF'%20stroke-width='1.4'/%3E%3Cpath%20d='M13%2010L23%2016L13%2022Z'%20fill='%23EAF0EF'/%3E%3C/svg%3E")
+      16 16,
+    pointer;
 }
 
 .tile__media {

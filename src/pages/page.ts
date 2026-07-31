@@ -14,7 +14,6 @@ import Lenis from 'lenis'
 
 import { mountShell } from '../lib/shell'
 import type { PageId } from '../lib/shell'
-import { initCursor } from '../modules/cursor'
 import { initMagnetics } from '../modules/magnetic'
 import { initReveals } from '../modules/reveals'
 
@@ -62,7 +61,6 @@ export function initPage(page: PageId): void {
       }
 
       if (c.fine && c.motionOk) {
-        cleanups.push(initCursor())
         cleanups.push(initMagnetics())
       }
 

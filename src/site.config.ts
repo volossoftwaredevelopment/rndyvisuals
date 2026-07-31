@@ -11,4 +11,7 @@ export const SITE = {
   youtube: 'https://www.youtube.com/@OnthewavewithIvan',
   whatsapp: '+306934631572',
   whatsappLink: 'https://wa.me/306934631572',
+  email: 'hello@rndyvisuals.com',
+  credit: 'Volos Software Development',
+  creditUrl: 'https://volossoftwaredevelopment.github.io/volossoftwareweb/',
 } as const
