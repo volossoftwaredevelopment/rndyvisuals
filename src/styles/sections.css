@@ -2,10 +2,11 @@
 
 /* ------------------------------------------------------------ sponsors */
 
+/* light band so the brand logos (dark + colour) all read, and it stands out */
 .sponsors {
-  background: var(--surface-2);
-  border-top: 1px solid var(--line-strong);
-  border-bottom: 1px solid var(--line-strong);
+  background: var(--ink-hi);
+  border-top: 1px solid rgba(7, 11, 15, 0.12);
+  border-bottom: 1px solid rgba(7, 11, 15, 0.12);
 }
 
 .sponsors__viewport {
@@ -29,16 +30,22 @@
 /* margin (not flex gap) so the two copies tile seamlessly under translateX(-50%) */
 .sponsors__logo {
   flex: none;
-  height: 24px;
+  height: 30px;
   width: auto;
-  margin-right: 4rem;
-  opacity: 0.55;
+  max-width: 150px;
+  object-fit: contain;
+  margin-right: clamp(2.5rem, 5vw, 4.5rem);
+  /* muted greyscale on the light band; colour + full opacity on hover */
+  filter: grayscale(1);
+  opacity: 0.62;
   transition:
     opacity 0.3s var(--ease-out-quart),
+    filter 0.3s var(--ease-out-quart),
     transform 0.3s var(--ease-out-quart);
 }
 
 .sponsors__logo:hover {
+  filter: grayscale(0);
   opacity: 1;
   transform: scale(1.06);
 }
@@ -558,5 +565,39 @@
 @media (prefers-reduced-motion: reduce) {
   .pcar .product {
     transition: none;
+  }
+}
+
+/* carousel: only the centred card shows its title/price/add — side cards are
+   just covers, so their rows don't overlap the active one (esp. on mobile) */
+.pcar .product__row {
+  transition: opacity 0.4s var(--ease-out-quart);
+}
+.pcar .product:not(.is-active) .product__row {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (max-width: 560px) {
+  .pcar__stage {
+    height: clamp(330px, 92vw, 420px);
+  }
+  .pcar .product {
+    width: 80vw;
+  }
+  /* nav buttons tucked to the very edge on small screens */
+  .pcar__prev {
+    left: -0.4rem;
+  }
+  .pcar__next {
+    right: -0.4rem;
+  }
+  .product__row {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .product__add {
+    width: 100%;
+    text-align: center;
   }
 }

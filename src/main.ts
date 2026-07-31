@@ -63,15 +63,15 @@ if (gridMount) {
 // sponsor marquee — logo images; one visible copy + an aria-hidden copy for the
 // seamless CSS loop (the duplicate is hidden under reduced motion)
 const SPONSORS = [
-  { name: 'DaVinci Resolve', file: 'davinci-resolve.svg' },
-  { name: 'Nautor Swan', file: 'nautor-swan.svg' },
-  { name: 'Rolex', file: 'rolex.svg' },
-  { name: 'BMW', file: 'bmw.svg' },
-  { name: 'G-Shock', file: 'g-shock.svg' },
-  { name: 'Prada', file: 'prada.svg' },
-  { name: 'RainAir', file: 'rainair.svg' },
-  { name: 'Sony', file: 'sony.svg' },
-  { name: 'Western Digital', file: 'western-digital.svg' },
+  { name: 'DaVinci Resolve', file: 'davinci.png' },
+  { name: 'BMW', file: 'bmw.png' },
+  { name: 'Rolex', file: 'rolex.png' },
+  { name: 'Maserati', file: 'maserati.svg' },
+  { name: 'Prada', file: 'prada.png' },
+  { name: 'Sony', file: 'sony.png' },
+  { name: 'Helly Hansen', file: 'helly-hansen.png' },
+  { name: 'Musto', file: 'musto.png' },
+  { name: 'Nautor Swan', file: 'nautor-swan.png' },
 ]
 const sponsorTrack = document.querySelector<HTMLElement>('[data-sponsors]')
 if (sponsorTrack) {

@@ -5,6 +5,7 @@
 import { SITE } from '../site.config'
 import { iconLabel } from './icons'
 import { initCart } from './cart'
+import { lockScroll, unlockScroll } from './ui'
 
 export type PageId = 'home' | 'products' | 'kind-words' | 'about' | 'contact' | 'privacy'
 
@@ -52,7 +53,12 @@ function buildHeader(page: PageId): HTMLElement {
     <nav class="site-nav" aria-label="Primary">
       ${NAV.map((n) => navLink(n, n.id === page)).join('')}
     </nav>
-    ${cart}
+    <div class="site-header__right">
+      ${cart}
+      <button class="nav-toggle" type="button" data-nav-toggle aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span>
+      </button>
+    </div>
   `
   return header
 }
@@ -158,6 +164,19 @@ function wireBackToTop(footer: HTMLElement): void {
   })
 }
 
+function buildNavMenu(page: PageId): HTMLElement {
+  const menu = document.createElement('div')
+  menu.className = 'nav-menu'
+  menu.innerHTML = `
+    <nav class="nav-menu__list" aria-label="Menu">
+      ${NAV.map(
+        (n) =>
+          `<a class="nav-menu__link${n.id === page ? ' is-active' : ''}" href="${n.href}"${n.id === page ? ' aria-current="page"' : ''}>${n.label}</a>`,
+      ).join('')}
+    </nav>`
+  return menu
+}
+
 export interface ShellParts {
   header: HTMLElement
   footer: HTMLElement
@@ -184,6 +203,27 @@ export function mountShell(page: PageId, opts: { footer?: boolean } = {}): Shell
   const header = buildHeader(page)
   skip.after(header)
   wireHeader(header)
+
+  // mobile menu (hamburger) — the 5-item nav can't fit narrow screens inline
+  const menu = buildNavMenu(page)
+  document.body.appendChild(menu)
+  const toggle = header.querySelector<HTMLButtonElement>('[data-nav-toggle]')
+  const setMenu = (open: boolean): void => {
+    if (open === menu.classList.contains('is-open')) return
+    menu.classList.toggle('is-open', open)
+    toggle?.classList.toggle('is-active', open)
+    toggle?.setAttribute('aria-expanded', String(open))
+    if (open) lockScroll()
+    else unlockScroll()
+  }
+  toggle?.addEventListener('click', () => setMenu(!menu.classList.contains('is-open')))
+  menu.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => setMenu(false)))
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') setMenu(false)
+  })
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 768) setMenu(false)
+  })
 
   const footer = buildFooter()
   if (withFooter) {
