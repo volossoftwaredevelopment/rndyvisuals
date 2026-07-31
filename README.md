@@ -1,6 +1,6 @@
-# rndyvisuals — сайт-портфолио Ивана Руди
+# rndyvisuals — сайт видеопродакшена
 
-Одностраничный кинематографичный сайт видеографа **Ivan Rudy (rndyvisuals)** — яхты, регаты, открытое море, Греция.
+Одностраничный кинематографичный сайт **RNDY (rndyvisuals)** — профессиональной видеокомпании: съёмка на заказ (реклама, бренд-фильмы, события, музыкальные клипы), от идеи до финального монтажа.
 
 - **Сайт:** https://volossoftwaredevelopment.github.io/rndyvisuals/
 - **Админка:** https://volossoftwaredevelopment.github.io/rndyvisuals/admin.html (скрытая, ссылок с сайта на неё нет)
@@ -75,10 +75,10 @@ npm run preview    # посмотреть собранную версию лок
 
 | Поле | Что это |
 |---|---|
-| `id` | уникальный слаг латиницей через дефис, например `aegean-crossing` (используется в адресе оверлея) |
-| `title` | название фильма, как оно выводится в списке работ |
-| `client` | заказчик / судно, например `S/Y Mythos` или `Personal` |
-| `category` | категория: `Yacht Film`, `Regatta Film`, `Charter Promo`, `Drone Study`, `Delivery Film`, `Short Film`… |
+| `id` | уникальный слаг латиницей через дефис, например `night-shift` (используется в адресе оверлея) |
+| `title` | название работы, как оно выводится в списке работ |
+| `client` | заказчик, например `Aperture Coffee` (или `Personal` для своих работ) |
+| `category` | категория: `Commercial`, `Brand Film`, `Music Video`, `Event Film`, `Fashion`, `Product`, `Documentary`, `Corporate`… (цвет постера-заглушки зависит от категории — новые категории можно добавить в `src/modules/posters.ts`) |
 | `year` | год, число — `2025` |
 | `duration` | длительность строкой — `1:24` |
 | `source.type` | откуда видео: `youtube`, `vimeo`, `file` или `placeholder` (заглушка без видео) |
@@ -91,12 +91,12 @@ npm run preview    # посмотреть собранную версию лок
 
 ```json
 {
-  "id": "aegean-crossing",
-  "title": "Aegean Crossing",
-  "client": "S/Y Mythos",
-  "category": "Yacht Film",
+  "id": "night-shift",
+  "title": "Night Shift",
+  "client": "Aperture Coffee",
+  "category": "Commercial",
   "year": 2025,
-  "duration": "1:24",
+  "duration": "1:12",
   "source": { "type": "youtube", "id": "AbCdEf12345" },
   "poster": "",
   "featured": true
@@ -137,7 +137,7 @@ npm run preview    # посмотреть собранную версию лок
    ```
 2. У регистратора домена добавь DNS-запись **CNAME → `volossoftwaredevelopment.github.io`** (для apex-домена без `www` некоторые регистраторы требуют A/ALIAS-записи — см. доку GitHub Pages).
 3. В репозитории: **Settings → Pages → Custom domain** → введи домен → дождись проверки → включи **Enforce HTTPS**.
-4. В коде поменяй на новый адрес: `liveUrl` в `src/site.config.ts`, `og:url` в `index.html` и ссылку «Back to harbor» в `public/404.html` (там абсолютный URL — относительный на странице 404 зацикливался бы). Запушь.
+4. В коде поменяй на новый адрес: `liveUrl` в `src/site.config.ts`, `og:url` + `og:image` в `index.html` и ссылку «Back to the reel» в `public/404.html` (там абсолютный URL — относительный на странице 404 зацикливался бы). Запушь.
 
 Больше ничего трогать не нужно: сборка использует `base: './'` (все пути относительные), поэтому тот же билд одинаково работает и на `volossoftwaredevelopment.github.io/rndyvisuals/`, и на собственном домене.
 

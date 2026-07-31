@@ -1,7 +1,7 @@
 /* RNDYVISUALS — design tokens (DESIGN_SPEC §2 palette, §3 type, §6 easings) */
 
 :root {
-  /* surfaces — near-black with a cold sea tint */
+  /* surfaces — near-black with a cold blue tint */
   --bg:        #070B0F;
   --surface:   #0D141A;
   --surface-2: #131C24;
@@ -16,7 +16,7 @@
   --ink-mid: #7C8A8E;
   --ink-low: #4E5B60;
 
-  /* accent — sea glass; rationed per §2 rule */
+  /* accent — teal; rationed per §2 rule */
   --accent:     #5FC9BA;
   --accent-dim: #2E5F58;
 

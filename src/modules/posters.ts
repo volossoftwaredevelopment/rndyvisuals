@@ -2,13 +2,17 @@
 
 import type { VideoEntry } from '../types'
 
+// Cool/editorial hue per category — kept in the 168–300° range so posters stay
+// cohesive with the cold palette + teal accent while varying by work type (§8).
 const HUE_BY_CATEGORY: Record<string, number> = {
-  'Yacht Film': 200,
-  'Regatta Film': 215,
-  'Charter Promo': 174,
-  'Drone Study': 232,
-  'Delivery Film': 188,
-  'Short Film': 252,
+  Commercial: 205,
+  'Brand Film': 190,
+  'Music Video': 280,
+  'Event Film': 235,
+  Fashion: 300,
+  Product: 168,
+  Documentary: 250,
+  Corporate: 215,
 }
 
 /** Deterministic ±8° jitter from the id hash (§8). */
