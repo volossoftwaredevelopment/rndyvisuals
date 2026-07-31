@@ -1,6 +1,7 @@
 # Краулеры читают robots.txt только из корня origin'а, поэтому на
-# 55kt.github.io/rndyvisuals/ этот файл не работает вовсе (корневой robots.txt
-# принадлежит юзер-сайту 55kt.github.io); актуален он станет на кастомном домене.
+# volossoftwaredevelopment.github.io/rndyvisuals/ этот файл не работает вовсе
+# (корневой robots.txt принадлежит юзер-сайту volossoftwaredevelopment.github.io);
+# актуален он станет на кастомном домене.
 # Намеренно НЕ добавляем сюда `Disallow: /admin.html`: запрет краулинга мешает
 # роботу увидеть <meta name="robots" content="noindex,nofollow"> в самой
 # admin.html — а именно meta-тег и держит админку вне поисковой выдачи.

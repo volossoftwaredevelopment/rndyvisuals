@@ -1,4 +1,5 @@
-// Manifest types — mirrors docs/DESIGN_SPEC.md §10.
+// Manifest types. Grid films use type 'file' (self-hosted) or youtube/vimeo.
+// client/category/year/duration are optional — tiles show the title only.
 
 export type SourceType = 'placeholder' | 'youtube' | 'vimeo' | 'file'
 
@@ -13,14 +14,16 @@ export interface VideoSource {
 export interface VideoEntry {
   id: string
   title: string
-  client: string
-  category: string
-  year: number
-  duration: string
   source: VideoSource
-  /** Custom poster URL; empty string resolves per §10 rules */
+  /** Poster URL; empty string resolves per resolution rules */
   poster: string
   featured: boolean
+  /** optional caption shown under the tile / in the player (no brands, no buzzwords) */
+  caption?: string
+  client?: string
+  category?: string
+  year?: number
+  duration?: string
 }
 
 export interface Manifest {

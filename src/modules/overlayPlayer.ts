@@ -37,7 +37,7 @@ export function createOverlay(videos: VideoEntry[], ctx: OverlayCtx): OverlayApi
             <p class="overlay__meta micro tabular"></p>
           </div>
           <div class="overlay__nav">
-            <button type="button" data-overlay-prev aria-label="Previous film">← PREV</button>
+            <button type="button" data-overlay-prev aria-label="Prev film">← PREV</button>
             <button type="button" data-overlay-next aria-label="Next film">NEXT →</button>
           </div>
         </div>
@@ -92,6 +92,8 @@ export function createOverlay(videos: VideoEntry[], ctx: OverlayCtx): OverlayApi
       video.className = 'overlay__embed'
       video.controls = true
       video.playsInline = true
+      // contain — vertical films letterbox cleanly inside the 16:9 stage
+      video.style.objectFit = 'contain'
       video.src = src.url
       if (!ctx.reduced) video.autoplay = true
       media.appendChild(video)
@@ -113,7 +115,9 @@ export function createOverlay(videos: VideoEntry[], ctx: OverlayCtx): OverlayApi
     if (!entry) return
     renderMedia(entry)
     title.textContent = entry.title
-    meta.textContent = `${entry.client} · ${entry.category} · ${entry.year} · ${entry.duration}`.toUpperCase()
+    // no brands / buzzwords — optional short caption only, hidden when absent
+    meta.textContent = entry.caption ? entry.caption.toUpperCase() : ''
+    meta.hidden = !entry.caption
     panel.setAttribute('aria-label', `${entry.title} — video player`)
   }
 

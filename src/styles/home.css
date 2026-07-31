@@ -1,0 +1,243 @@
+/* Home — full-bleed video hero (centered lockup) + tight video grid */
+
+/* hero centered over the reel, reilinjoey-style */
+.hero {
+  align-items: center;
+  text-align: center;
+}
+
+/* The base scrim (components.css) only darkens the top/bottom edges — tuned for
+   a bottom-aligned lockup. With the lockup centered, add a soft mid-frame wash
+   so the white wordmark + slogan stay legible over bright video frames. This
+   layer sits inside .hero__media, below .hero__lockup (z-index:1), so it dims
+   the footage without touching the text. */
+.hero__scrim::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    120% 80% at 50% 47%,
+    rgba(7, 11, 15, 0.55) 0%,
+    rgba(7, 11, 15, 0.28) 42%,
+    rgba(7, 11, 15, 0) 68%
+  );
+  pointer-events: none;
+}
+
+.hero__lockup {
+  padding: 0 clamp(1rem, 3vw, 2rem);
+  text-align: center;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.hero__brand-mask {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+
+.hero__brand-line {
+  display: block;
+}
+
+/* Sized so the 11-char wordmark fits on one line without clipping across the
+   full range: "RNDYVISUALS" is ~9x the font-size wide, so the vw coefficient
+   must keep 9 x font-size below the viewport minus the lockup's side padding.
+   11vw overflowed (and was silently clipped by .hero__brand-mask) on every
+   viewport below ~1220px; 9vw fits from 320px up. */
+.hero__brand {
+  font-size: clamp(1.75rem, 9vw, 8rem);
+  line-height: 0.92;
+  white-space: nowrap;
+  text-shadow: 0 2px 24px rgba(7, 11, 15, 0.55);
+}
+
+.hero__slogan {
+  margin-top: 1.5rem;
+  color: var(--ink);
+  letter-spacing: 0.18em;
+  text-shadow: 0 1px 14px rgba(7, 11, 15, 0.6);
+}
+
+.hero__cue {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(1.75rem, 5vh, 3rem);
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: var(--fs-micro);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-mid);
+  transition: color 0.3s var(--ease-out-quart);
+}
+
+.hero__cue:hover {
+  color: var(--ink-hi);
+}
+
+.hero__cue-icon {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  animation: cue-bob 2.4s var(--ease-inout-circ) infinite;
+}
+
+@keyframes cue-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__cue-icon {
+    animation: none;
+  }
+}
+
+/* ------------------------------------------------------------- work grid */
+
+.work {
+  padding: 0;
+  scroll-margin-top: 0;
+}
+
+.work__intro {
+  padding: clamp(3.5rem, 8vh, 6rem) var(--gutter) clamp(1.5rem, 4vh, 2.5rem);
+}
+
+.work-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  /* tight — edge to edge, no gaps (reilinjoey) */
+  gap: 0;
+}
+
+.tile {
+  position: relative;
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--bg);
+}
+
+.tile__media {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.tile__video,
+.tile__poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tile__video {
+  opacity: 0;
+  transition:
+    opacity 0.5s var(--ease-out-quart),
+    transform 0.6s var(--ease-out-quart);
+}
+
+.tile.is-playing .tile__video {
+  opacity: 1;
+}
+
+.tile:hover .tile__video,
+.tile:focus-visible .tile__video {
+  transform: scale(1.04);
+}
+
+/* subtle vignette + hover lift on the title */
+.tile__media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(7, 11, 15, 0.35), transparent 40%);
+  opacity: 0;
+  transition: opacity 0.4s var(--ease-out-quart);
+  pointer-events: none;
+}
+
+.tile:hover .tile__media::after,
+.tile:focus-visible .tile__media::after {
+  opacity: 1;
+}
+
+.tile__bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 1.25rem 1.15rem;
+}
+
+.tile__title {
+  font-size: var(--fs-micro);
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink);
+  transition: color 0.3s var(--ease-out-quart);
+}
+
+.tile:hover .tile__title,
+.tile:focus-visible .tile__title {
+  color: var(--ink-hi);
+}
+
+/* touch play affordance (custom cursor covers fine pointers) */
+.tile__play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 3.5rem;
+  height: 3.5rem;
+  display: none;
+  place-items: center;
+  border: 1px solid var(--ink-hi);
+  border-radius: 50%;
+  background: var(--scrim);
+  color: var(--ink-hi);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+}
+
+@media (hover: none) {
+  .tile__play {
+    display: grid;
+  }
+}
+
+/* desktop — tight 3 columns */
+@media (min-width: 1024px) {
+  .work-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile__video {
+    transition: opacity 0.3s ease;
+  }
+  .tile:hover .tile__video {
+    transform: none;
+  }
+}

@@ -23,7 +23,8 @@ function hueJitter(id: string): number {
 }
 
 export function posterHue(entry: VideoEntry): number {
-  return (HUE_BY_CATEGORY[entry.category] ?? 200) + hueJitter(entry.id)
+  const base = (entry.category && HUE_BY_CATEGORY[entry.category]) || 200
+  return base + hueJitter(entry.id)
 }
 
 export interface PosterOptions {
@@ -69,15 +70,20 @@ export function createPoster(entry: VideoEntry, index: number, opts: PosterOptio
     watermark.textContent = String(index + 1).padStart(2, '0')
     root.appendChild(watermark)
 
-    const client = document.createElement('span')
-    client.className = 'poster__client'
-    client.textContent = `${entry.client} · ${entry.year}`
-    root.appendChild(client)
+    const line = [entry.client, entry.year].filter(Boolean).join(' · ')
+    if (line) {
+      const client = document.createElement('span')
+      client.className = 'poster__client'
+      client.textContent = line
+      root.appendChild(client)
+    }
 
-    const chip = document.createElement('span')
-    chip.className = 'chip poster__chip'
-    chip.textContent = entry.duration
-    root.appendChild(chip)
+    if (entry.duration) {
+      const chip = document.createElement('span')
+      chip.className = 'chip poster__chip'
+      chip.textContent = entry.duration
+      root.appendChild(chip)
+    }
   }
 
   return root

@@ -3,367 +3,67 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>rndyvisuals — Video Production Company</title>
+    <title>rndyvisuals — Filmmaker</title>
     <meta
       name="description"
-      content="RNDY is a professional video production company. Commercials, brand films, events and music videos — made on commission, from concept to final cut."
+      content="rndyvisuals — filmmaker, available worldwide. Selected films."
     />
     <meta name="theme-color" content="#070B0F" />
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="preload" as="image" href="./media/home-hero.jpg" fetchpriority="high" />
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="rndyvisuals" />
-    <meta property="og:title" content="rndyvisuals — Video Production Company" />
-    <meta
-      property="og:description"
-      content="A professional video production company. Films made on commission — from concept to final cut."
-    />
+    <meta property="og:title" content="rndyvisuals — Filmmaker" />
+    <meta property="og:description" content="Filmmaker — available worldwide. Selected films." />
     <meta property="og:image" content="https://volossoftwaredevelopment.github.io/rndyvisuals/og.jpg" />
     <meta property="og:url" content="https://volossoftwaredevelopment.github.io/rndyvisuals/" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="rndyvisuals — Video Production Company" />
-    <meta
-      name="twitter:description"
-      content="A professional video production company. Films made on commission — from concept to final cut."
-    />
+    <meta name="twitter:title" content="rndyvisuals — Filmmaker" />
+    <meta name="twitter:description" content="Filmmaker — available worldwide. Selected films." />
     <meta name="twitter:image" content="https://volossoftwaredevelopment.github.io/rndyvisuals/og.jpg" />
 
-    <!-- js gate + repeat-visit short path, before first paint -->
     <script>
-      (function () {
-        var d = document.documentElement;
-        d.className += ' js';
-        try {
-          if (sessionStorage.getItem('seen-intro') === '1') d.className += ' seen-intro';
-        } catch (e) {}
-      })();
+      document.documentElement.className += ' js'
     </script>
-
-    <!-- preloader critical CSS — must paint before any bundle loads (§4.1) -->
-    <style>
-      body {
-        margin: 0;
-        background: #070b0f;
-      }
-      #preloader {
-        position: fixed;
-        inset: 0;
-        z-index: 900;
-        font-family: 'Space Grotesk Variable', 'Space Grotesk', system-ui, sans-serif;
-      }
-      .preloader__under {
-        position: absolute;
-        inset: 0;
-        background: #04070a;
-        clip-path: inset(0 0 0 0);
-      }
-      .preloader__panel {
-        position: absolute;
-        inset: 0;
-        background: #070b0f;
-        clip-path: inset(0 0 0 0);
-      }
-      .preloader__brand {
-        position: absolute;
-        top: 1.5rem;
-        left: 2rem;
-        margin: 0;
-        font-size: 11px;
-        font-weight: 500;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: #7c8a8e;
-      }
-      .preloader__counter-mask {
-        position: absolute;
-        bottom: 1.25rem;
-        left: 2rem;
-        overflow: hidden;
-        line-height: 0.9;
-      }
-      .preloader__counter {
-        display: block;
-        font-size: 12vw;
-        font-weight: 500;
-        letter-spacing: -0.02em;
-        color: #4e5b60;
-        font-variant-numeric: tabular-nums;
-      }
-      .preloader__coords {
-        position: absolute;
-        bottom: 1.5rem;
-        right: 2rem;
-        margin: 0;
-        font-size: 11px;
-        font-weight: 500;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: #4e5b60;
-      }
-      html:not(.js) #preloader {
-        display: none;
-      }
-      html.seen-intro .preloader__brand,
-      html.seen-intro .preloader__counter-mask,
-      html.seen-intro .preloader__coords {
-        visibility: hidden;
-      }
-      @media (prefers-reduced-motion: reduce) {
-        .preloader__counter-mask,
-        .preloader__coords {
-          display: none;
-        }
-      }
-    </style>
-
     <script type="module" src="./src/main.ts"></script>
   </head>
   <body>
-    <a class="skip-link" href="#work">Skip to work index</a>
-
-    <div class="preloader" id="preloader" aria-hidden="true">
-      <div class="preloader__under"></div>
-      <div class="preloader__panel">
-        <p class="preloader__brand">RNDYVISUALS — VIDEO PRODUCTION</p>
-        <div class="preloader__counter-mask">
-          <span class="preloader__counter">0</span>
-        </div>
-        <p class="preloader__coords">FILM ON COMMISSION</p>
-      </div>
-    </div>
-
-    <header class="header">
-      <a class="header__brand" href="#top" aria-label="rndyvisuals — back to top">RNDY<sup>®</sup></a>
-      <nav class="header__nav" aria-label="Primary">
-        <a class="header__link" href="#work">Work</a>
-        <a class="header__link header__link--secondary" href="#about">About</a>
-        <a class="header__link header__link--secondary" href="#contact">Contact</a>
-        <a
-          class="header__link header__link--wa"
-          href="https://wa.me/306934631572"
-          target="_blank"
-          rel="noopener noreferrer"
-          >WhatsApp</a
-        >
-      </nav>
-    </header>
-
-    <main id="main">
-      <!-- §4.2 hero -->
-      <section class="hero" id="top" aria-label="Intro">
+    <main id="content">
+      <section class="hero" id="top" aria-label="rndyvisuals — filmmaker">
         <div class="hero__media" aria-hidden="true">
           <div class="hero__media-inner">
-            <div class="hero__sea"></div>
-            <div class="hero__glow"></div>
-            <div class="hero__grain"></div>
-            <!-- drop-in slot for the real hero loop (≤2.5 MB, 1280×720, muted):
             <video
               class="hero__video"
-              src="./hero.mp4"
-              poster="./hero-poster.jpg"
-              autoplay
+              src="./media/home-hero.mp4"
+              poster="./media/home-hero.jpg"
               muted
               loop
               playsinline
-              fetchpriority="high"
             ></video>
-            -->
           </div>
           <div class="hero__scrim"></div>
         </div>
         <div class="hero__lockup">
-          <p class="hero__eyebrow micro" data-hero-fade>RNDYVISUALS — VIDEO PRODUCTION</p>
-          <h1 class="hero__title display">
-            <span class="hero__title-line">ROLL</span>
-            <span class="hero__title-line">CAMERA</span>
+          <h1 class="hero__brand display">
+            <span class="hero__brand-mask"><span class="hero__brand-line">rndyvisuals</span></span>
           </h1>
-          <p class="hero__sub" data-hero-fade>
-            Commercials, brand films, events and music videos — made on commission, from concept to
-            final cut.
-          </p>
-          <ul class="hero__meta micro tabular" data-hero-fade>
-            <li>FULL-SERVICE VIDEO PRODUCTION</li>
-            <li>AVAILABLE FOR COMMISSIONS — 2026</li>
-          </ul>
-          <p class="hero__cta" data-hero-fade>
-            <a class="btn" href="#reel" data-magnetic
-              ><span class="btn__label" data-magnetic-label>Watch the reel</span></a
-            >
-          </p>
+          <p class="hero__slogan micro">FILMMAKER — AVAILABLE WORLDWIDE</p>
         </div>
+        <a class="hero__cue" href="#work" data-cursor="link">
+          <span class="hero__cue-icon" aria-hidden="true">↓</span> View Work
+        </a>
       </section>
 
-      <!-- §4.3 featured showreel -->
-      <section class="section reel" id="reel" aria-labelledby="reel-eyebrow">
-        <p class="eyebrow micro" id="reel-eyebrow" data-reveal="fade-up">SHOWREEL — '25</p>
-        <button
-          class="reel__frame"
-          type="button"
-          data-cursor="play"
-          data-reveal="clip"
-          data-parallax-frame
-          aria-label="Play showreel — two minutes of recent work"
-        >
-          <span class="reel__inner" data-clip-inner data-parallax-media></span>
-          <span class="reel__overlay" aria-hidden="true"></span>
-          <span class="reel__caption" aria-hidden="true">Two minutes of recent work.</span>
-          <span class="chip reel__chip tabular" aria-hidden="true">2:06</span>
-          <span class="reel__play micro" aria-hidden="true">PLAY</span>
-        </button>
-      </section>
-
-      <!-- §4.4 work index — rows rendered from the manifest -->
-      <section class="section work" id="work" aria-labelledby="work-title">
-        <p class="eyebrow micro" data-reveal="fade-up">SELECTED WORK 2023–2025</p>
-        <h2 class="section__title display" id="work-title" data-reveal="headline-lines">
-          WORK INDEX (08)
-        </h2>
-        <ol class="work__list"></ol>
+      <section class="work" id="work" aria-label="Selected films">
+        <div class="work-grid" data-video-grid></div>
         <noscript>
-          <ol class="noscript-list">
-            <li>01 — Night Shift · Aperture Coffee · Commercial · 1:12 · 2025</li>
-            <li>02 — Field Notes · Lumen Optics · Brand Film · 2:04 · 2025</li>
-            <li>03 — Afterglow · Kestrel Records · Music Video · 3:18 · 2024</li>
-            <li>04 — Opening Night · Meridian Festival · Event Film · 1:46 · 2024</li>
-            <li>05 — Signature · Oro Atelier · Fashion · 1:20 · 2025</li>
-            <li>06 — Made to Last · Forge &amp; Co. · Product · 0:58 · 2025</li>
-            <li>07 — The Long Way · Northbound · Documentary · 2:40 · 2023</li>
-            <li>08 — Launch Day · Vertex Labs · Corporate · 1:34 · 2023</li>
-          </ol>
+          <p style="padding: 2.5rem var(--gutter); text-align: center; color: #b8c4c6">
+            Enable JavaScript to watch the films, or visit
+            <a style="color: #eaf0ef" href="https://www.instagram.com/rndyvisuals/">Instagram</a>.
+          </p>
         </noscript>
       </section>
-
-      <!-- §4.5 about -->
-      <section class="section about" id="about" aria-labelledby="about-title">
-        <h2 class="section__title display" id="about-title" data-reveal="headline-lines">
-          FROM BRIEF TO FINAL CUT.
-        </h2>
-        <div class="about__grid">
-          <figure class="about__portrait" data-reveal="clip">
-            <span class="about__portrait-art" data-clip-inner aria-hidden="true">
-              <span class="about__portrait-sea"></span>
-              <span class="about__portrait-grain"></span>
-              <span class="about__portrait-meta micro tabular">ON SET · IN THE EDIT</span>
-            </span>
-            <!-- drop-in slot for the real portrait still:
-            <img
-              class="about__photo"
-              src="./portrait.jpg"
-              alt="RNDY crew on set"
-              loading="lazy"
-              decoding="async"
-            />
-            -->
-          </figure>
-          <div class="about__copy">
-            <p class="about__lede" data-reveal="fade-up">
-              RNDY is a video production company. You bring the brief — we bring the film.
-            </p>
-            <p class="about__body" data-reveal="fade-up">
-              We're hired to make films: commercials, brand stories, event coverage, music videos.
-              We handle them end to end — concept, crew, shoot, edit, delivery — and we sweat the
-              things that make footage feel expensive: light, timing, sound, restraint. We keep
-              teams tight and briefs honest, we shoot fast without cutting corners, and we hit the
-              deadline. Ninety seconds for a launch or a full campaign across formats, the job is
-              the same: turn your brief into something people actually want to watch.
-            </p>
-            <ul class="about__meta">
-              <li class="micro" data-reveal="fade-up">COMMISSIONS — WORLDWIDE</li>
-              <li class="micro" data-reveal="fade-up">FULL SERVICE — CONCEPT TO DELIVERY</li>
-              <li class="micro" data-reveal="fade-up">DELIVERY — 4K MASTERS + SOCIAL CUTS</li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <!-- §4.6 services / approach -->
-      <section class="section approach" id="approach" aria-labelledby="approach-eyebrow">
-        <p class="eyebrow micro" id="approach-eyebrow" data-reveal="fade-up">WHAT WE DO</p>
-        <ol class="approach__list">
-          <li class="approach__row">
-            <span class="approach__rule" data-reveal="rule" aria-hidden="true"></span>
-            <div class="approach__inner" data-reveal="fade-up">
-              <span class="approach__num micro tabular" aria-hidden="true">01</span>
-              <h3 class="approach__name display">Commercials &amp; brand films</h3>
-              <p class="approach__desc">
-                A product's best ninety seconds. Built for launches, campaigns and the brands
-                behind them.
-              </p>
-            </div>
-          </li>
-          <li class="approach__row">
-            <span class="approach__rule" data-reveal="rule" aria-hidden="true"></span>
-            <div class="approach__inner" data-reveal="fade-up">
-              <span class="approach__num micro tabular" aria-hidden="true">02</span>
-              <h3 class="approach__name display">Events &amp; coverage</h3>
-              <p class="approach__desc">
-                Conferences, shows, openings and weddings. Same-week highlight edits.
-              </p>
-            </div>
-          </li>
-          <li class="approach__row">
-            <span class="approach__rule" data-reveal="rule" aria-hidden="true"></span>
-            <div class="approach__inner" data-reveal="fade-up">
-              <span class="approach__num micro tabular" aria-hidden="true">03</span>
-              <h3 class="approach__name display">Music &amp; motion</h3>
-              <p class="approach__desc">
-                Music videos, title sequences and social content — shot and cut to the beat.
-              </p>
-            </div>
-          </li>
-        </ol>
-        <span class="rule-line" data-reveal="rule" aria-hidden="true"></span>
-        <p class="approach__close caption" data-reveal="fade-up">
-          4K masters · vertical social cuts · 48-hour preview edit on request.
-        </p>
-      </section>
-
-      <!-- §4.7 contact / footer -->
-      <section class="section contact" id="contact" aria-labelledby="contact-title">
-        <div class="contact__body">
-          <h2 class="contact__title display" id="contact-title" data-reveal="headline-lines">
-            TELL US ABOUT THE SHOOT.
-          </h2>
-          <div class="contact__ctas">
-            <a
-              class="btn btn--lg"
-              href="https://wa.me/306934631572"
-              target="_blank"
-              rel="noopener noreferrer"
-              data-reveal="fade-up"
-              data-magnetic
-              ><span class="btn__label" data-magnetic-label>WhatsApp +30 693 463 1572</span></a
-            >
-            <a class="btn btn--lg" href="mailto:hello@rndyvisuals.com" data-reveal="fade-up" data-magnetic
-              ><span class="btn__label" data-magnetic-label>hello@rndyvisuals.com</span></a
-            >
-          </div>
-          <p class="contact__note caption" data-reveal="fade-up">
-            Available for commissions worldwide. Send the brief, the deadline and the format — we
-            reply within 24–48 h.
-          </p>
-        </div>
-        <!-- nested inside section/main, so the landmark needs the explicit role -->
-        <footer class="footer" role="contentinfo">
-          <span class="rule-line" data-reveal="rule" aria-hidden="true"></span>
-          <div class="footer__bar micro">
-            <span class="footer__copy">© 2026 rndyvisuals</span>
-            <a href="https://www.instagram.com/rndyvisuals/" target="_blank" rel="noopener noreferrer"
-              >Instagram</a
-            >
-            <a
-              href="https://www.youtube.com/@OnthewavewithIvan"
-              target="_blank"
-              rel="noopener noreferrer"
-              >YouTube</a
-            >
-            <span>FILM ON COMMISSION</span>
-            <a href="#top">Back to top</a>
-          </div>
-        </footer>
-      </section>
     </main>
-
-    <div class="grain" aria-hidden="true"></div>
   </body>
 </html>

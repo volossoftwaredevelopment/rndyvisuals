@@ -1,91 +1,24 @@
 {
   "videos": [
     {
-      "id": "night-shift",
-      "title": "Night Shift",
-      "client": "Aperture Coffee",
-      "category": "Commercial",
-      "year": 2025,
-      "duration": "1:12",
-      "source": { "type": "placeholder" },
-      "poster": "",
+      "id": "viva-la-malta",
+      "title": "Viva la Malta",
+      "source": { "type": "file", "url": "./media/viva-la-malta.mp4" },
+      "poster": "./media/viva-la-malta.jpg",
       "featured": true
     },
     {
-      "id": "field-notes",
-      "title": "Field Notes",
-      "client": "Lumen Optics",
-      "category": "Brand Film",
-      "year": 2025,
-      "duration": "2:04",
-      "source": { "type": "placeholder" },
-      "poster": "",
-      "featured": true
-    },
-    {
-      "id": "afterglow",
-      "title": "Afterglow",
-      "client": "Kestrel Records",
-      "category": "Music Video",
-      "year": 2024,
-      "duration": "3:18",
-      "source": { "type": "placeholder" },
-      "poster": "",
+      "id": "a-love-story",
+      "title": "A Love Story",
+      "source": { "type": "file", "url": "./media/love-story.mp4" },
+      "poster": "./media/love-story.jpg",
       "featured": false
     },
     {
-      "id": "opening-night",
-      "title": "Opening Night",
-      "client": "Meridian Festival",
-      "category": "Event Film",
-      "year": 2024,
-      "duration": "1:46",
-      "source": { "type": "placeholder" },
-      "poster": "",
-      "featured": false
-    },
-    {
-      "id": "signature",
-      "title": "Signature",
-      "client": "Oro Atelier",
-      "category": "Fashion",
-      "year": 2025,
-      "duration": "1:20",
-      "source": { "type": "placeholder" },
-      "poster": "",
-      "featured": false
-    },
-    {
-      "id": "made-to-last",
-      "title": "Made to Last",
-      "client": "Forge & Co.",
-      "category": "Product",
-      "year": 2025,
-      "duration": "0:58",
-      "source": { "type": "placeholder" },
-      "poster": "",
-      "featured": false
-    },
-    {
-      "id": "the-long-way",
-      "title": "The Long Way",
-      "client": "Northbound",
-      "category": "Documentary",
-      "year": 2023,
-      "duration": "2:40",
-      "source": { "type": "placeholder" },
-      "poster": "",
-      "featured": false
-    },
-    {
-      "id": "launch-day",
-      "title": "Launch Day",
-      "client": "Vertex Labs",
-      "category": "Corporate",
-      "year": 2023,
-      "duration": "1:34",
-      "source": { "type": "placeholder" },
-      "poster": "",
+      "id": "seaquill",
+      "title": "Seaquill",
+      "source": { "type": "file", "url": "./media/seaquill.mp4" },
+      "poster": "./media/seaquill.jpg",
       "featured": false
     }
   ]
