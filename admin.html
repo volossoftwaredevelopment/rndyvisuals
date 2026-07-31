@@ -54,6 +54,7 @@
           <button class="tab-btn is-active" type="button" data-tab-btn="videos" aria-selected="true">Videos</button>
           <button class="tab-btn" type="button" data-tab-btn="contacts" aria-selected="false">Contacts &amp; Home</button>
           <button class="tab-btn" type="button" data-tab-btn="sponsors" aria-selected="false">Sponsors</button>
+          <button class="tab-btn" type="button" data-tab-btn="products" aria-selected="false">Products</button>
         </nav>
 
         <!-- ------------------------------------------------ Videos tab -->
@@ -215,6 +216,85 @@
           </section>
         </div>
 
+        <!-- --------------------------------------------- Products tab -->
+        <div class="tab-panel" data-tab-panel="products" hidden>
+          <section class="panel">
+            <div class="panel-head">
+              <h2 class="panel-title">Products — top to bottom is the order in the shop</h2>
+              <span class="panel-note" id="products-note"></span>
+            </div>
+            <p class="msg" id="products-msg" hidden></p>
+            <ol class="product-rows" id="product-rows"></ol>
+            <div class="add">
+              <button id="product-add" class="btn" type="button">+ Add product</button>
+            </div>
+
+            <div class="product-editor" id="product-editor" hidden>
+              <div class="pe-head">
+                <h3 class="panel-title" id="pe-heading">Edit product</h3>
+                <button id="pe-done" class="btn btn--ghost btn--sm" type="button">Done</button>
+              </div>
+              <p class="msg" id="pe-msg" role="status" aria-live="polite" hidden></p>
+              <div class="form">
+                <fieldset class="form-group">
+                  <legend>Details</legend>
+                  <label class="fld">
+                    <span class="fld-label">Title</span>
+                    <input class="field" data-pf="title" spellcheck="false" placeholder="Product name" />
+                  </label>
+                  <div class="pe-grid">
+                    <label class="fld">
+                      <span class="fld-label">Category</span>
+                      <input class="field" data-pf="category" spellcheck="false" placeholder="Video Course" list="pe-categories" />
+                    </label>
+                    <label class="fld">
+                      <span class="fld-label">Price (€)</span>
+                      <input class="field" data-pf="price" type="number" inputmode="numeric" min="0" placeholder="0" />
+                    </label>
+                    <label class="fld">
+                      <span class="fld-label">Cover hue (0–360)</span>
+                      <input class="field" data-pf="hue" type="number" inputmode="numeric" min="0" max="360" placeholder="210" />
+                    </label>
+                  </div>
+                  <datalist id="pe-categories">
+                    <option value="Video Course"></option>
+                    <option value="Presets"></option>
+                    <option value="Assets"></option>
+                  </datalist>
+                  <label class="fld">
+                    <span class="fld-label">Blurb</span>
+                    <textarea class="field" data-pf="blurb" rows="3" placeholder="Short description shown in the product modal."></textarea>
+                  </label>
+                  <label class="fld">
+                    <span class="fld-label">Features (one per line)</span>
+                    <textarea class="field" data-pf="features" rows="4" placeholder="6+ hours · 40 lessons&#10;Lifetime access"></textarea>
+                  </label>
+                </fieldset>
+
+                <fieldset class="form-group">
+                  <legend>Images (slideshow)</legend>
+                  <p class="help">The first image is the cover. Recommended ~1200 × 900 px, under 8 MB each.</p>
+                  <ol class="pe-images" id="pe-images"></ol>
+                  <label class="btn btn--ghost sponsor-file">
+                    Add images…
+                    <input id="pe-images-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" multiple hidden />
+                  </label>
+                </fieldset>
+
+                <fieldset class="form-group">
+                  <legend>Downloadable file</legend>
+                  <p class="help">What the buyer downloads (LUTs, project files, a PDF…). Committed to the repo; keep it under 50 MB for this demo.</p>
+                  <div id="pe-download"></div>
+                  <label class="btn btn--ghost sponsor-file">
+                    Upload file…
+                    <input id="pe-download-input" type="file" hidden />
+                  </label>
+                </fieldset>
+              </div>
+            </div>
+          </section>
+        </div>
+
         <!-- ---------------------------------- shared publish + build bar -->
         <div class="publish" id="publish-bar">
           <div class="publish-row">
@@ -225,6 +305,9 @@
               Publish
             </button>
             <button id="sponsors-publish" class="btn btn--primary" type="button" data-publish-for="sponsors" hidden disabled>
+              Publish
+            </button>
+            <button id="products-publish" class="btn btn--primary" type="button" data-publish-for="products" hidden disabled>
               Publish
             </button>
             <div class="deploy">

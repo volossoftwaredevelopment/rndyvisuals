@@ -3,6 +3,7 @@
 
 import { PRODUCTS } from '../data/products'
 import type { Product } from '../data/products'
+import { esc } from './esc'
 import { lockScroll, unlockScroll, trapFocus } from './ui'
 
 const KEY = 'rndy.cart'
@@ -114,8 +115,8 @@ function renderDrawer(): void {
       <div class="cart__item">
         <span class="cart__cover" style="--poster-hue:${p.hue}" aria-hidden="true"></span>
         <div class="cart__meta">
-          <span class="cart__title">${p.title}</span>
-          <span class="cart__cat micro">${p.category}</span>
+          <span class="cart__title">${esc(p.title)}</span>
+          <span class="cart__cat micro">${esc(p.category)}</span>
           <div class="cart__qty">
             <button type="button" aria-label="Decrease quantity" data-dec="${p.id}">−</button>
             <span aria-label="Quantity">${qty}</span>

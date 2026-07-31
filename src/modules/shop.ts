@@ -5,6 +5,7 @@
 import { PRODUCTS } from '../data/products'
 import type { Product } from '../data/products'
 import { add as addToCart } from '../lib/cart'
+import { esc } from '../lib/esc'
 import { lockScroll, unlockScroll, trapFocus } from '../lib/ui'
 
 const money = (n: number): string => `€${n}`
@@ -25,24 +26,70 @@ function iconFor(category: string): string {
 }
 
 function coverInner(p: Product): string {
-  return `<span class="product__grad" aria-hidden="true"></span><span class="product__grain" aria-hidden="true"></span><span class="product__icon" aria-hidden="true">${iconFor(p.category)}</span>`
+  const hasImg = !!(p.images && p.images[0])
+  const img = hasImg ? `<img class="product__img" src="${p.images![0]}" alt="" loading="lazy" />` : ''
+  const icon = hasImg ? '' : `<span class="product__icon" aria-hidden="true">${iconFor(p.category)}</span>`
+  return `<span class="product__grad" aria-hidden="true"></span><span class="product__grain" aria-hidden="true"></span>${img}${icon}`
 }
 
 function cardHTML(p: Product, i: number): string {
   return `
   <article class="product" data-i="${i}">
-    <button class="product__cover" data-product="${p.id}" style="--poster-hue:${p.hue}" aria-label="${p.title} — view details">
+    <button class="product__cover" data-product="${p.id}" style="--poster-hue:${p.hue}" aria-label="${esc(p.title)} — view details">
       ${coverInner(p)}
-      <span class="product__badge micro">${p.category}</span>
+      <span class="product__badge micro">${esc(p.category)}</span>
     </button>
     <div class="product__row">
       <div class="product__info">
-        <h3 class="product__title">${p.title}</h3>
+        <h3 class="product__title">${esc(p.title)}</h3>
         <span class="product__price">${money(p.price)}</span>
       </div>
       <button type="button" class="product__add" data-add="${p.id}">Add to cart</button>
     </div>
   </article>`
+}
+
+// Modal cover: a small slideshow of the product's images (arrows + dots when
+// more than one), or the generated gradient when the product has no images.
+function renderModalCover(cover: HTMLElement, p: Product): void {
+  const imgs = (p.images ?? []).filter(Boolean)
+  if (imgs.length === 0) {
+    cover.style.setProperty('--poster-hue', String(p.hue))
+    cover.classList.remove('has-slides')
+    cover.innerHTML = coverInner(p)
+    return
+  }
+  cover.classList.add('has-slides')
+  const multi = imgs.length > 1
+  const nav = multi
+    ? `<button type="button" class="pslide__nav pslide__prev" data-slide-prev aria-label="Previous image">←</button>
+       <button type="button" class="pslide__nav pslide__next" data-slide-next aria-label="Next image">→</button>`
+    : ''
+  const dots = multi
+    ? `<div class="pslide__dots">${imgs
+        .map((_, i) => `<button type="button" class="pslide__dot${i === 0 ? ' is-on' : ''}" data-slide="${i}" aria-label="Image ${i + 1}"></button>`)
+        .join('')}</div>`
+    : ''
+  cover.innerHTML = `
+    <div class="pslide" data-pslide>
+      ${imgs.map((src, i) => `<img class="pslide__img${i === 0 ? ' is-on' : ''}" src="${src}" alt="" />`).join('')}
+      ${nav}${dots}
+    </div>`
+  if (!multi) return
+  const slides = Array.from(cover.querySelectorAll<HTMLElement>('.pslide__img'))
+  const dotEls = Array.from(cover.querySelectorAll<HTMLButtonElement>('.pslide__dot'))
+  let idx = 0
+  const show = (n: number): void => {
+    idx = (n + slides.length) % slides.length
+    slides.forEach((s, i) => s.classList.toggle('is-on', i === idx))
+    dotEls.forEach((d, i) => {
+      d.classList.toggle('is-on', i === idx)
+      d.setAttribute('aria-selected', String(i === idx))
+    })
+  }
+  cover.querySelector('[data-slide-prev]')?.addEventListener('click', () => show(idx - 1))
+  cover.querySelector('[data-slide-next]')?.addEventListener('click', () => show(idx + 1))
+  dotEls.forEach((d) => d.addEventListener('click', () => show(Number(d.dataset.slide))))
 }
 
 function buildModal(): HTMLElement {
@@ -59,9 +106,12 @@ function buildModal(): HTMLElement {
         <p class="pmodal__price" data-pmodal-price></p>
         <p class="pmodal__blurb" data-pmodal-blurb></p>
         <ul class="pmodal__features" data-pmodal-features></ul>
-        <button type="button" class="btn btn--lg pmodal__add" data-pmodal-add>
-          <span class="btn__label">Add to cart</span>
-        </button>
+        <div class="pmodal__actions">
+          <button type="button" class="btn btn--lg pmodal__add" data-pmodal-add>
+            <span class="btn__label">Add to cart</span>
+          </button>
+          <a class="btn btn--lg pmodal__download" data-pmodal-download download hidden>Download</a>
+        </div>
       </div>
     </div>`
   document.body.appendChild(el)
@@ -144,15 +194,23 @@ export function initShop(mount: HTMLElement): void {
     if (!p) return
     lastFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
     const q = <T extends Element>(sel: string): T => modal.querySelector<T>(sel)!
-    const cover = q<HTMLElement>('[data-pmodal-cover]')
-    cover.style.setProperty('--poster-hue', String(p.hue))
-    cover.innerHTML = coverInner(p)
+    renderModalCover(q<HTMLElement>('[data-pmodal-cover]'), p)
     q<HTMLElement>('[data-pmodal-cat]').textContent = p.category
     q<HTMLElement>('[data-pmodal-title]').textContent = p.title
     q<HTMLElement>('[data-pmodal-price]').textContent = money(p.price)
     q<HTMLElement>('[data-pmodal-blurb]').textContent = p.blurb
-    q<HTMLElement>('[data-pmodal-features]').innerHTML = p.features.map((f) => `<li>${f}</li>`).join('')
+    q<HTMLElement>('[data-pmodal-features]').innerHTML = p.features.map((f) => `<li>${esc(f)}</li>`).join('')
     q<HTMLButtonElement>('[data-pmodal-add]').onclick = (): void => addToCart(p.id)
+    // downloadable deliverable (served from the repo) — shown only when set
+    const dl = q<HTMLAnchorElement>('[data-pmodal-download]')
+    if (p.download) {
+      dl.href = p.download
+      dl.setAttribute('download', p.downloadName || '')
+      dl.hidden = false
+    } else {
+      dl.hidden = true
+      dl.removeAttribute('href')
+    }
 
     modal.classList.add('is-open')
     lockScroll()

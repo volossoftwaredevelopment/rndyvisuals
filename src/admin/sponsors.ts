@@ -82,13 +82,14 @@ export function createSponsorsPanel(ctx: AdminCtx): Panel {
   const note = $('#sponsors-note')
 
   let baseline = ''
+  let loaded = false // guard: a pristine, never-loaded panel must not report dirty
   let list: Sponsor[] = []
   // staged logo bytes keyed by their target filename (only new/replaced files)
   const staged = new Map<string, StagedLogo>()
   let publishing = false
 
   const serialize = (): string => JSON.stringify(list)
-  const dirty = (): boolean => serialize() !== baseline || staged.size > 0
+  const dirty = (): boolean => loaded && (serialize() !== baseline || staged.size > 0)
 
   function previewSrc(logo: string): string {
     return staged.get(logo)?.dataUrl ?? `./sponsors/${logo}`
@@ -339,6 +340,7 @@ export function createSponsorsPanel(ctx: AdminCtx): Panel {
         list = Array.isArray(parsed.sponsors) ? parsed.sponsors : []
         staged.clear()
         baseline = serialize()
+        loaded = true
         setMsg(msg, '')
         render()
       } catch (err) {
@@ -349,6 +351,7 @@ export function createSponsorsPanel(ctx: AdminCtx): Panel {
       list = []
       staged.clear()
       baseline = ''
+      loaded = false
       rowsEl.textContent = ''
       setMsg(msg, '')
       setMsg(addMsg, '')

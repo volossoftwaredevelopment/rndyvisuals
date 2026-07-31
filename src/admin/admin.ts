@@ -15,6 +15,7 @@ import { fetchOEmbedTitle, parseVideoUrl } from './oembed'
 import { attachListDnd } from './dnd'
 import { createContactsPanel } from './contacts'
 import { createSponsorsPanel } from './sponsors'
+import { createProductsPanel } from './products'
 import type { AdminCtx, Panel } from './panel'
 import type { SourceType, VideoEntry } from './types'
 
@@ -65,7 +66,8 @@ const ctx: AdminCtx = {
 
 const contactsPanel = createContactsPanel(ctx)
 const sponsorsPanel = createSponsorsPanel(ctx)
-const extraPanels: Panel[] = [contactsPanel, sponsorsPanel]
+const productsPanel = createProductsPanel(ctx)
+const extraPanels: Panel[] = [contactsPanel, sponsorsPanel, productsPanel]
 
 /* ----------------------------- media staging ------------------------------ */
 // Uploaded clips (and their auto-generated posters) are held in memory until
@@ -417,8 +419,7 @@ async function validateAndLoad(token: string): Promise<void> {
 async function loadAll(): Promise<void> {
   const jobs: Promise<void>[] = []
   if (!isDirty()) jobs.push(loadVideos())
-  if (!contactsPanel.isDirty()) jobs.push(contactsPanel.load())
-  if (!sponsorsPanel.isDirty()) jobs.push(sponsorsPanel.load())
+  for (const p of extraPanels) if (!p.isDirty()) jobs.push(p.load())
   await Promise.all(jobs)
   void refreshDeploy()
 }
