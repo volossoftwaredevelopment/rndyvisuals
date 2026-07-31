@@ -6,7 +6,7 @@ import { SITE } from '../site.config'
 import { CONTACTS } from '../data/content'
 import { iconLabel } from './icons'
 import { initCart } from './cart'
-import { lockScroll, unlockScroll } from './ui'
+import { lockScroll, unlockScroll, trapFocus } from './ui'
 
 export type PageId = 'home' | 'products' | 'kind-words' | 'about' | 'contact' | 'privacy'
 
@@ -110,8 +110,8 @@ function buildCookie(): HTMLElement {
   el.setAttribute('aria-label', 'Cookie notice')
   el.hidden = true
   el.innerHTML = `
-    <p class="cookie__text">We use cookies to improve your experience and analyze traffic. By accepting, you consent to the use of cookies in accordance with our <a href="./privacy.html">Privacy Policy</a>.</p>
-    <button type="button" class="cookie__accept" data-cookie-accept>Accept</button>
+    <p class="cookie__text" id="cookie-desc">We use cookies to improve your experience and analyze traffic. By accepting, you consent to the use of cookies in accordance with our <a href="./privacy.html">Privacy Policy</a>.</p>
+    <button type="button" class="cookie__accept" data-cookie-accept aria-describedby="cookie-desc">Accept</button>
   `
   return el
 }
@@ -209,13 +209,25 @@ export function mountShell(page: PageId, opts: { footer?: boolean } = {}): Shell
   const menu = buildNavMenu(page)
   document.body.appendChild(menu)
   const toggle = header.querySelector<HTMLButtonElement>('[data-nav-toggle]')
+  // keep Tab inside the open full-screen menu so focus can't reach the page
+  // controls sitting behind the opaque overlay
+  const onMenuKeydown = (e: KeyboardEvent): void => {
+    if (menu.classList.contains('is-open')) trapFocus(menu, e)
+  }
   const setMenu = (open: boolean): void => {
     if (open === menu.classList.contains('is-open')) return
     menu.classList.toggle('is-open', open)
     toggle?.classList.toggle('is-active', open)
     toggle?.setAttribute('aria-expanded', String(open))
-    if (open) lockScroll()
-    else unlockScroll()
+    if (open) {
+      lockScroll()
+      document.addEventListener('keydown', onMenuKeydown)
+      menu.querySelector<HTMLElement>('a')?.focus()
+    } else {
+      unlockScroll()
+      document.removeEventListener('keydown', onMenuKeydown)
+      toggle?.focus()
+    }
   }
   toggle?.addEventListener('click', () => setMenu(!menu.classList.contains('is-open')))
   menu.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => setMenu(false)))

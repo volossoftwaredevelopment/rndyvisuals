@@ -15,8 +15,9 @@ export function initReviews(mount: HTMLElement): void {
     <button type="button" class="reviews__nav reviews__prev" data-prev aria-label="Previous testimonial">←</button>
     <button type="button" class="reviews__nav reviews__next" data-next aria-label="Next testimonial">→</button>
     <span class="reviews__mark" aria-hidden="true">&ldquo;</span>
-    <div class="reviews__card" data-card aria-live="polite" aria-atomic="true">
+    <div class="reviews__card" data-card role="group" aria-roledescription="testimonial">
       <div class="reviews__stars" data-stars aria-hidden="true"></div>
+      <span class="sr-only" data-rating></span>
       <blockquote class="reviews__quote" data-quote></blockquote>
       <div class="reviews__by">
         <span class="reviews__name" data-name></span>
@@ -24,14 +25,17 @@ export function initReviews(mount: HTMLElement): void {
       </div>
     </div>
     <div class="reviews__dots" data-dots role="group" aria-label="Choose a testimonial"></div>
+    <p class="sr-only" data-live aria-live="polite" aria-atomic="true"></p>
   `
 
   const card = mount.querySelector<HTMLElement>('[data-card]')!
   const starsEl = mount.querySelector<HTMLElement>('[data-stars]')!
+  const ratingEl = mount.querySelector<HTMLElement>('[data-rating]')!
   const quoteEl = mount.querySelector<HTMLElement>('[data-quote]')!
   const nameEl = mount.querySelector<HTMLElement>('[data-name]')!
   const roleEl = mount.querySelector<HTMLElement>('[data-role]')!
   const dotsEl = mount.querySelector<HTMLElement>('[data-dots]')!
+  const liveEl = mount.querySelector<HTMLElement>('[data-live]')!
 
   dotsEl.innerHTML = REVIEWS.map(
     (_, i) => `<button type="button" class="reviews__dot" data-i="${i}" aria-label="Testimonial ${i + 1}"></button>`,
@@ -45,6 +49,7 @@ export function initReviews(mount: HTMLElement): void {
     const r = REVIEWS[index]
     if (!r) return
     starsEl.innerHTML = starsMarkup(r.rating)
+    ratingEl.textContent = `Rated ${r.rating} out of 5.`
     quoteEl.textContent = r.quote
     nameEl.textContent = r.name
     roleEl.textContent = r.role
@@ -55,18 +60,28 @@ export function initReviews(mount: HTMLElement): void {
     })
   }
 
-  const go = (n: number): void => {
+  // Announce only user-initiated changes (not the 6s auto-advance) so a screen
+  // reader is never interrupted by unsolicited testimonial churn.
+  const announce = (): void => {
+    const r = REVIEWS[index]
+    if (r) liveEl.textContent = `Testimonial ${index + 1} of ${REVIEWS.length}. Rated ${r.rating} of 5. “${r.quote}” — ${r.name}, ${r.role}.`
+  }
+
+  const go = (n: number, byUser = false): void => {
     const next = (n + REVIEWS.length) % REVIEWS.length
     if (next === index) return
-    if (reduced) {
+    const commit = (): void => {
       index = next
       paint()
+      if (byUser) announce()
+    }
+    if (reduced) {
+      commit()
       return
     }
     card.classList.add('is-out')
     window.setTimeout(() => {
-      index = next
-      paint()
+      commit()
       card.classList.remove('is-out')
     }, 260)
   }
@@ -80,13 +95,13 @@ export function initReviews(mount: HTMLElement): void {
 
   dots.forEach((d) =>
     d.addEventListener('click', () => {
-      go(Number(d.dataset.i))
+      go(Number(d.dataset.i), true)
       start()
     }),
   )
 
   const step = (dir: number): void => {
-    go(index + dir)
+    go(index + dir, true)
     start()
   }
   mount.querySelector<HTMLButtonElement>('[data-prev]')?.addEventListener('click', () => step(-1))

@@ -1,4 +1,6 @@
-// Mock client testimonials for the reviews carousel.
+// Placeholder client testimonials for the reviews carousel — replace with real,
+// permissioned quotes when available. Kept genre-neutral (no sea/yacht references)
+// to match the general video-production positioning.
 
 export interface Review {
   quote: string
@@ -9,9 +11,9 @@ export interface Review {
 
 export const REVIEWS: Review[] = [
   {
-    quote: 'They turned three days on the water into two minutes that gave me chills. Every frame felt intentional.',
+    quote: 'They turned a three-day shoot into two minutes that gave me chills. Every frame felt intentional.',
     name: 'Marco V.',
-    role: 'Yacht owner',
+    role: 'Creative director',
     rating: 5,
   },
   {
@@ -21,9 +23,9 @@ export const REVIEWS: Review[] = [
     rating: 5,
   },
   {
-    quote: "We've worked with a lot of crews. None made the boat look like this. Worth every cent.",
+    quote: "We've worked with a lot of crews. None made our product look like this. Worth every cent.",
     name: 'Andreas K.',
-    role: 'Charter manager',
+    role: 'Marketing lead',
     rating: 5,
   },
   {
@@ -35,7 +37,7 @@ export const REVIEWS: Review[] = [
   {
     quote: 'Small crew, huge result. They read the light and just knew where to be.',
     name: 'Dmitry P.',
-    role: 'Regatta organiser',
+    role: 'Festival producer',
     rating: 5,
   },
 ]

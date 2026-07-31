@@ -355,6 +355,13 @@
   color: var(--accent);
 }
 
+/* .btn sets display:inline-flex, which beats the UA [hidden] rule — restore it
+   so a product with no downloadable file hides the button instead of showing a
+   dead CTA */
+.pmodal__download[hidden] {
+  display: none;
+}
+
 /* modal slideshow */
 .pslide {
   position: absolute;
@@ -607,7 +614,9 @@
 
 .pcar__stage {
   position: relative;
-  height: clamp(370px, 52vw, 560px);
+  /* min tall enough that the active card's price + Add-to-cart row is never
+     clipped by overflow:hidden at mid-range widths */
+  height: clamp(415px, 52vw, 560px);
   overflow: hidden;
 }
 
@@ -709,7 +718,9 @@
 
 @media (max-width: 560px) {
   .pcar__stage {
-    height: clamp(330px, 92vw, 420px);
+    /* mobile card wraps the Add-to-cart button full-width below the cover —
+       reserve enough height so it isn't clipped near the 560px bound */
+    height: clamp(360px, 96vw, 480px);
   }
   .pcar .product {
     width: 80vw;

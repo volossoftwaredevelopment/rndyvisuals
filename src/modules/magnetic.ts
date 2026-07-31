@@ -96,8 +96,14 @@ export function magnetize(el: HTMLElement): () => void {
   }
 }
 
-/** Register every [data-magnetic] element in the document. */
+/** Register every [data-magnetic] element in the document, except those inside
+ * the overlay — the overlay owns its close button's magnetize/unmagnetize
+ * lifecycle (only while open), so it must not be double-registered here on a
+ * matchMedia re-eval. */
 export function initMagnetics(): () => void {
-  const offs = gsap.utils.toArray<HTMLElement>('[data-magnetic]').map(magnetize)
+  const offs = gsap.utils
+    .toArray<HTMLElement>('[data-magnetic]')
+    .filter((el) => !el.closest('.overlay'))
+    .map(magnetize)
   return () => offs.forEach((off) => off())
 }

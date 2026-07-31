@@ -17,6 +17,7 @@ import Lenis from 'lenis'
 import rawManifest from './data/videos.json'
 import type { Manifest } from './types'
 import { HERO, SPONSORS, SPONSORS_ENABLED } from './data/content'
+import { esc } from './lib/esc'
 import { mountShell } from './lib/shell'
 import { initMagnetics } from './modules/magnetic'
 import { initReveals } from './modules/reveals'
@@ -71,7 +72,7 @@ if (sponsorsSection) {
     sponsorsSection.innerHTML = '<span class="sponsors__divider" aria-hidden="true"></span>'
   } else if (sponsorTrack) {
     const logo = (s: { name: string; logo: string }, dup: boolean): string =>
-      `<img class="sponsors__logo${dup ? ' is-dup' : ''}" src="./sponsors/${s.logo}" alt="${dup ? '' : s.name}"${dup ? ' aria-hidden="true"' : ''} loading="lazy" />`
+      `<img class="sponsors__logo${dup ? ' is-dup' : ''}" src="./sponsors/${esc(s.logo)}" alt="${dup ? '' : esc(s.name)}"${dup ? ' aria-hidden="true"' : ''} loading="lazy" />`
     const setAlt = SPONSORS.map((s) => logo(s, false)).join('')
     const setDup = SPONSORS.map((s) => logo(s, true)).join('')
     // Each half = REPEAT sets so the track is wide enough that even a 27"+ screen
@@ -147,6 +148,9 @@ document.addEventListener('click', (e) => {
   if (!target || !lenis) return
   e.preventDefault()
   lenis.scrollTo(target, { offset: -10 })
+  // preventDefault cancels the native fragment focus move, so restore it — the
+  // skip link (#content, tabindex=-1) must actually move focus into <main>.
+  target.focus({ preventScroll: true })
 })
 
 /* --------------------------------------------------- overlay lazy-load */

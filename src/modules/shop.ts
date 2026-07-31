@@ -27,7 +27,7 @@ function iconFor(category: string): string {
 
 function coverInner(p: Product): string {
   const hasImg = !!(p.images && p.images[0])
-  const img = hasImg ? `<img class="product__img" src="${p.images![0]}" alt="" loading="lazy" />` : ''
+  const img = hasImg ? `<img class="product__img" src="${esc(p.images![0])}" alt="" loading="lazy" />` : ''
   const icon = hasImg ? '' : `<span class="product__icon" aria-hidden="true">${iconFor(p.category)}</span>`
   return `<span class="product__grad" aria-hidden="true"></span><span class="product__grain" aria-hidden="true"></span>${img}${icon}`
 }
@@ -41,7 +41,7 @@ function cardHTML(p: Product, i: number): string {
     </button>
     <div class="product__row">
       <div class="product__info">
-        <h3 class="product__title">${esc(p.title)}</h3>
+        <h2 class="product__title">${esc(p.title)}</h2>
         <span class="product__price">${money(p.price)}</span>
       </div>
       <button type="button" class="product__add" data-add="${p.id}">Add to cart</button>
@@ -72,7 +72,7 @@ function renderModalCover(cover: HTMLElement, p: Product): void {
     : ''
   cover.innerHTML = `
     <div class="pslide" data-pslide>
-      ${imgs.map((src, i) => `<img class="pslide__img${i === 0 ? ' is-on' : ''}" src="${src}" alt="" />`).join('')}
+      ${imgs.map((src, i) => `<img class="pslide__img${i === 0 ? ' is-on' : ''}" src="${esc(src)}" alt="" />`).join('')}
       ${nav}${dots}
     </div>`
   if (!multi) return
@@ -161,6 +161,11 @@ export function initShop(mount: HTMLElement): void {
       card.style.pointerEvents = a > 2 ? 'none' : 'auto'
       card.setAttribute('aria-hidden', off === 0 ? 'false' : 'true')
       card.classList.toggle('is-active', off === 0)
+      // keep only the active card's controls in the tab order — non-active cards
+      // are aria-hidden and (their Add button) painted invisible.
+      card.querySelectorAll<HTMLElement>('button').forEach((b) => {
+        b.tabIndex = off === 0 ? 0 : -1
+      })
     })
     dots.forEach((d, di) => {
       d.classList.toggle('is-on', di === active)

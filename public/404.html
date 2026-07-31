@@ -131,14 +131,18 @@
   <main>
     <h1><span>Out</span><span>Of Frame</span></h1>
     <p class="sub micro">404 &mdash; this frame was never shot</p>
-    <!-- Absolute URL on purpose: GitHub Pages serves 404.html at the requested
-         path, so a relative "./" would resolve against e.g. /rndyvisuals/work/foo
-         and loop back to this page. Update on custom-domain migration (see README). -->
+    <!-- Absolute URL fallback for no-JS: GitHub Pages serves 404.html at the
+         requested path, so a relative "./" would loop. The script below rewrites
+         it to the home of whichever host served this page (Vercel serves at /). -->
     <a class="back" href="https://volossoftwaredevelopment.github.io/rndyvisuals/">Back to the reel</a>
   </main>
 
   <footer class="micro">
-    <span>&copy; 2026 rndyvisuals</span>
+    <span>&copy; 2026 RNDY VISUALS</span>
   </footer>
+  <script>
+    var back = document.querySelector('.back')
+    if (back) back.href = location.hostname.indexOf('github.io') !== -1 ? '/rndyvisuals/' : '/'
+  </script>
 </body>
 </html>

@@ -94,6 +94,7 @@ export function createOverlay(videos: VideoEntry[], ctx: OverlayCtx): OverlayApi
       video.playsInline = true
       // contain — vertical films letterbox cleanly inside the 16:9 stage
       video.style.objectFit = 'contain'
+      if (entry.poster) video.poster = entry.poster // reduced-motion shows a still, not a black frame
       video.src = src.url
       if (!ctx.reduced) video.autoplay = true
       media.appendChild(video)
