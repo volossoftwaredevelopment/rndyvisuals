@@ -49,52 +49,188 @@
         <p class="msg" id="token-msg" hidden></p>
       </section>
 
-      <section class="panel" id="panel-videos" hidden>
-        <div class="panel-head">
-          <h2 class="panel-title">Videos — top to bottom is the order on the site</h2>
-          <span class="panel-note" id="videos-note"></span>
+      <section id="workspace" hidden>
+        <nav class="tabs" aria-label="Content sections">
+          <button class="tab-btn is-active" type="button" data-tab-btn="videos" aria-selected="true">Videos</button>
+          <button class="tab-btn" type="button" data-tab-btn="contacts" aria-selected="false">Contacts &amp; Home</button>
+          <button class="tab-btn" type="button" data-tab-btn="sponsors" aria-selected="false">Sponsors</button>
+        </nav>
+
+        <!-- ------------------------------------------------ Videos tab -->
+        <div class="tab-panel" data-tab-panel="videos">
+          <section class="panel" id="panel-videos">
+            <div class="panel-head">
+              <h2 class="panel-title">Videos — top to bottom is the order on the site</h2>
+              <span class="panel-note" id="videos-note"></span>
+            </div>
+            <p class="msg" id="videos-msg" hidden></p>
+            <button id="videos-retry" class="btn" type="button" hidden>Try again</button>
+            <ol class="rows" id="rows"></ol>
+            <div class="add">
+              <div class="add-row">
+                <input
+                  id="add-url"
+                  class="field"
+                  type="url"
+                  placeholder="Paste a YouTube or Vimeo link to add a film"
+                  spellcheck="false"
+                  aria-label="Video link"
+                />
+                <button id="add-btn" class="btn" type="button">Add video</button>
+              </div>
+              <div class="add-foot">
+                <button id="add-blank" class="btn btn--ghost" type="button">+ Add a blank placeholder instead</button>
+              </div>
+              <p class="msg" id="add-msg" hidden></p>
+            </div>
+            <p class="msg" id="publish-msg" hidden></p>
+          </section>
         </div>
-        <p class="msg" id="videos-msg" hidden></p>
-        <button id="videos-retry" class="btn" type="button" hidden>Try again</button>
-        <ol class="rows" id="rows"></ol>
-        <div class="add">
-          <div class="add-row">
-            <input
-              id="add-url"
-              class="field"
-              type="url"
-              placeholder="Paste a YouTube or Vimeo link to add a film"
-              spellcheck="false"
-              aria-label="Video link"
-            />
-            <button id="add-btn" class="btn" type="button">Add video</button>
+
+        <!-- --------------------------------------------- Contacts tab -->
+        <div class="tab-panel" data-tab-panel="contacts" hidden>
+          <section class="panel">
+            <div class="panel-head">
+              <h2 class="panel-title">Home &amp; contacts</h2>
+              <span class="panel-note" id="contacts-note"></span>
+            </div>
+            <p class="msg" id="contacts-msg" hidden></p>
+            <form id="contacts-form" class="form">
+              <fieldset class="form-group">
+                <legend>Home hero</legend>
+                <label class="fld">
+                  <span class="fld-label">Wordmark</span>
+                  <input class="field" data-site="hero.brand" spellcheck="false" placeholder="RNDY VISUALS" />
+                </label>
+                <label class="fld">
+                  <span class="fld-label">Slogan</span>
+                  <input
+                    class="field"
+                    data-site="hero.slogan"
+                    spellcheck="false"
+                    placeholder="FILMMAKER — AVAILABLE WORLDWIDE"
+                  />
+                </label>
+              </fieldset>
+
+              <fieldset class="form-group">
+                <legend>Contact links</legend>
+                <label class="fld">
+                  <span class="fld-label">Instagram</span>
+                  <input class="field" data-site="contacts.instagram" type="url" spellcheck="false" placeholder="https://instagram.com/…" />
+                </label>
+                <label class="fld">
+                  <span class="fld-label">YouTube</span>
+                  <input class="field" data-site="contacts.youtube" type="url" spellcheck="false" placeholder="https://youtube.com/@…" />
+                </label>
+                <label class="fld">
+                  <span class="fld-label">WhatsApp link</span>
+                  <input class="field" data-site="contacts.whatsapp" type="url" spellcheck="false" placeholder="https://wa.me/…" />
+                </label>
+                <label class="fld">
+                  <span class="fld-label">WhatsApp label</span>
+                  <input class="field" data-site="contacts.whatsappLabel" spellcheck="false" placeholder="+30 693 463 1572" />
+                </label>
+                <label class="fld">
+                  <span class="fld-label">Telegram</span>
+                  <input class="field" data-site="contacts.telegram" type="url" spellcheck="false" placeholder="https://t.me/…" />
+                </label>
+                <label class="fld">
+                  <span class="fld-label">LinkedIn</span>
+                  <input class="field" data-site="contacts.linkedin" type="url" spellcheck="false" placeholder="https://linkedin.com/company/…" />
+                </label>
+                <label class="fld">
+                  <span class="fld-label">X</span>
+                  <input class="field" data-site="contacts.x" type="url" spellcheck="false" placeholder="https://x.com/…" />
+                </label>
+                <label class="fld">
+                  <span class="fld-label">Email</span>
+                  <input class="field" data-site="contacts.email" type="email" spellcheck="false" placeholder="hello@rndyvisuals.com" />
+                </label>
+              </fieldset>
+
+              <fieldset class="form-group">
+                <legend>Sponsor strip</legend>
+                <label class="fld fld--check">
+                  <input type="checkbox" data-site="sponsors.enabled" />
+                  <span class="fld-label">Show the sponsor strip on the home page</span>
+                </label>
+                <p class="help">
+                  When off, the home page shows a slim divider instead of the logo marquee. Manage the logos
+                  themselves in the <strong>Sponsors</strong> tab.
+                </p>
+              </fieldset>
+            </form>
+          </section>
+        </div>
+
+        <!-- --------------------------------------------- Sponsors tab -->
+        <div class="tab-panel" data-tab-panel="sponsors" hidden>
+          <section class="panel">
+            <div class="panel-head">
+              <h2 class="panel-title">Sponsors — top to bottom is the marquee order</h2>
+              <span class="panel-note" id="sponsors-note"></span>
+            </div>
+            <p class="help">
+              Best logo: a <strong>transparent PNG or SVG</strong> with a white or light mark, about
+              <strong>600 × 200 px</strong> (at least 3× its on-site size), under 800 KB. The site tints every
+              logo white to sit on the dark strip, so a plain single-colour mark reads best.
+            </p>
+            <p class="msg" id="sponsors-msg" hidden></p>
+            <ol class="sponsor-rows" id="sponsor-rows"></ol>
+            <div class="add">
+              <div class="add-row add-row--sponsor">
+                <input
+                  id="sponsor-add-name"
+                  class="field"
+                  placeholder="Sponsor name"
+                  spellcheck="false"
+                  aria-label="Sponsor name"
+                />
+                <label class="btn btn--ghost sponsor-file">
+                  Choose logo…
+                  <input
+                    id="sponsor-add-file"
+                    type="file"
+                    accept="image/png,image/svg+xml,image/jpeg,image/webp"
+                    hidden
+                  />
+                </label>
+                <button id="sponsor-add-btn" class="btn" type="button">Add sponsor</button>
+              </div>
+              <p class="msg" id="sponsor-add-msg" hidden></p>
+            </div>
+          </section>
+        </div>
+
+        <!-- ---------------------------------- shared publish + build bar -->
+        <div class="publish" id="publish-bar">
+          <div class="publish-row">
+            <button id="publish-btn" class="btn btn--primary" type="button" data-publish-for="videos" disabled>
+              Publish
+            </button>
+            <button id="contacts-publish" class="btn btn--primary" type="button" data-publish-for="contacts" hidden disabled>
+              Publish
+            </button>
+            <button id="sponsors-publish" class="btn btn--primary" type="button" data-publish-for="sponsors" hidden disabled>
+              Publish
+            </button>
+            <div class="deploy">
+              <span class="pill" id="deploy-pill" hidden></span>
+              <button
+                id="deploy-refresh"
+                class="icon-btn"
+                type="button"
+                title="Check build status"
+                aria-label="Check build status"
+                hidden
+              >
+                ↻
+              </button>
+            </div>
           </div>
-          <div class="add-foot">
-            <button id="add-blank" class="btn btn--ghost" type="button">+ Add a blank placeholder instead</button>
-          </div>
-          <p class="msg" id="add-msg" hidden></p>
         </div>
       </section>
-
-      <footer class="publish" id="publish-bar" hidden>
-        <p class="msg" id="publish-msg" hidden></p>
-        <div class="publish-row">
-          <button id="publish-btn" class="btn btn--primary" type="button" disabled>Publish</button>
-          <div class="deploy">
-            <span class="pill" id="deploy-pill" hidden></span>
-            <button
-              id="deploy-refresh"
-              class="icon-btn"
-              type="button"
-              title="Check build status"
-              aria-label="Check build status"
-              hidden
-            >
-              ↻
-            </button>
-          </div>
-        </div>
-      </footer>
     </main>
     <script type="module" src="./src/admin/admin.ts"></script>
   </body>

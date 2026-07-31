@@ -1,20 +1,23 @@
-// RNDY — ADMIN. Static dashboard for src/data/videos.json, spec §11.
-// All state lives in this module; rows re-render on structural changes only
-// (add / delete / reorder) so inline inputs never lose focus while typing.
+// RNDY — ADMIN. Static content manager for the site's editable manifests.
+// Tabbed shell: Videos (src/data/videos.json), Contacts & Home (src/data/site.json),
+// Sponsors (src/data/sponsors.json). One GitHub token drives every panel; each
+// commits to `main`, and the shared deploy pill follows the resulting build.
 import '@fontsource-variable/archivo/standard.css'
 import '@fontsource-variable/space-grotesk'
 import '../styles/tokens.css'
 import './admin.css'
 
 import { SITE } from '../site.config'
-import { fetchDeployStatus, fetchManifest, publishManifest, validateToken } from './github'
-import type { DeployStatus } from './github'
+import { fetchManifest, publishManifest, validateToken } from './github'
+import { afterPublish, initDeploy, refreshDeploy, resetDeploy } from './deploy'
 import { fetchOEmbedTitle, parseVideoUrl } from './oembed'
 import { attachListDnd } from './dnd'
+import { createContactsPanel } from './contacts'
+import { createSponsorsPanel } from './sponsors'
+import type { AdminCtx, Panel } from './panel'
 import type { Manifest, SourceType, VideoEntry } from './types'
 
 const TOKEN_KEY = 'rndy.admin.token'
-const POLL_MS = 10_000
 
 function $<T extends HTMLElement = HTMLElement>(sel: string): T {
   const node = document.querySelector<T>(sel)
@@ -29,7 +32,7 @@ const ui = {
   tokenForget: $<HTMLButtonElement>('#token-forget'),
   tokenMsg: $('#token-msg'),
   helpRepo: $('#help-repo'),
-  videosPanel: $('#panel-videos'),
+  workspace: $('#workspace'),
   videosNote: $('#videos-note'),
   videosMsg: $('#videos-msg'),
   videosRetry: $<HTMLButtonElement>('#videos-retry'),
@@ -38,7 +41,6 @@ const ui = {
   addBtn: $<HTMLButtonElement>('#add-btn'),
   addBlank: $<HTMLButtonElement>('#add-blank'),
   addMsg: $('#add-msg'),
-  publishBar: $('#publish-bar'),
   publishBtn: $<HTMLButtonElement>('#publish-btn'),
   publishMsg: $('#publish-msg'),
   deployPill: $('#deploy-pill'),
@@ -54,11 +56,14 @@ const state = {
   publishing: false,
 }
 
-let pollTimer = 0
-// Timestamp of the last successful publish — lets the deploy poll ignore the
-// PREVIOUS run when GitHub hasn't registered the new push-triggered run yet.
-let publishedAt = 0
-const PUBLISH_RUN_WAIT_MS = 120_000
+const ctx: AdminCtx = {
+  token: () => state.token,
+  valid: () => state.tokenValid,
+}
+
+const contactsPanel = createContactsPanel(ctx)
+const sponsorsPanel = createSponsorsPanel(ctx)
+const extraPanels: Panel[] = [contactsPanel, sponsorsPanel]
 
 /* ---------------------------------- utils ---------------------------------- */
 
@@ -84,7 +89,7 @@ function slugify(text: string): string {
   return text
     .toLowerCase()
     .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
 }
@@ -121,6 +126,10 @@ function countChanges(): number {
 
 function isDirty(): boolean {
   return countChanges() > 0
+}
+
+function anyDirty(): boolean {
+  return isDirty() || extraPanels.some((p) => p.isDirty())
 }
 
 function updatePublishUI(): void {
@@ -247,14 +256,9 @@ async function validateAndLoad(token: string): Promise<void> {
     localStorage.setItem(TOKEN_KEY, token)
     ui.tokenDot.classList.add('is-valid')
     ui.tokenForget.hidden = false
+    ui.workspace.hidden = false
     setMsg(ui.tokenMsg, 'Token works — this browser can publish changes.', 'ok')
-    if (isDirty()) {
-      // Re-saving a token (e.g. after a 401 mid-session) must not wipe
-      // unpublished edits. A stale sha is handled by the 409 path in publish.
-      void refreshDeploy()
-    } else {
-      await loadVideos()
-    }
+    await loadAll()
   } catch (err) {
     state.tokenValid = false
     ui.tokenDot.classList.remove('is-valid')
@@ -265,9 +269,18 @@ async function validateAndLoad(token: string): Promise<void> {
   }
 }
 
+// Load every panel that has no unpublished edits — re-saving a token (e.g. after
+// a 401 mid-session) must not wipe in-progress changes in any panel.
+async function loadAll(): Promise<void> {
+  const jobs: Promise<void>[] = []
+  if (!isDirty()) jobs.push(loadVideos())
+  if (!contactsPanel.isDirty()) jobs.push(contactsPanel.load())
+  if (!sponsorsPanel.isDirty()) jobs.push(sponsorsPanel.load())
+  await Promise.all(jobs)
+  void refreshDeploy()
+}
+
 async function loadVideos(): Promise<void> {
-  ui.videosPanel.hidden = false
-  ui.publishBar.hidden = false
   ui.videosRetry.hidden = true
   setMsg(ui.videosMsg, 'Loading videos…', 'info')
   try {
@@ -278,7 +291,6 @@ async function loadVideos(): Promise<void> {
     setMsg(ui.videosMsg, '')
     renderRows()
     updatePublishUI()
-    void refreshDeploy()
   } catch (err) {
     setMsg(ui.videosMsg, errText(err), 'error')
     ui.videosRetry.hidden = false
@@ -292,12 +304,12 @@ function forgetToken(): void {
   state.sha = ''
   state.baseline = []
   state.videos = []
-  stopPolling()
   ui.tokenInput.value = ''
   ui.tokenDot.classList.remove('is-valid')
   ui.tokenForget.hidden = true
-  ui.videosPanel.hidden = true
-  ui.publishBar.hidden = true
+  ui.workspace.hidden = true
+  extraPanels.forEach((p) => p.reset())
+  resetDeploy()
   setMsg(ui.tokenMsg, 'Token removed from this browser.', 'info')
 }
 
@@ -369,10 +381,8 @@ async function publish(): Promise<void> {
     const manifest: Manifest = { videos: structuredClone(state.videos) }
     state.sha = await publishManifest(state.token, manifest, state.sha, { videos: state.baseline })
     state.baseline = manifest.videos
-    publishedAt = Date.now()
     setMsg(ui.publishMsg, 'Published — the site is rebuilding now.', 'ok')
-    renderDeploy({ state: 'queued', finishedAt: null, createdAt: null })
-    schedulePoll()
+    afterPublish()
   } catch (err) {
     setMsg(ui.publishMsg, errText(err), 'error')
   } finally {
@@ -381,86 +391,28 @@ async function publish(): Promise<void> {
   }
 }
 
-/* -------------------------------- deploy status ------------------------------ */
+/* ------------------------------------ tabs ----------------------------------- */
 
-function stopPolling(): void {
-  if (pollTimer) {
-    window.clearTimeout(pollTimer)
-    pollTimer = 0
+function initTabs(): void {
+  const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-tab-btn]'))
+  const panels = Array.from(document.querySelectorAll<HTMLElement>('[data-tab-panel]'))
+  // each panel publishes its own manifest — show only the active tab's button in
+  // the shared publish bar.
+  const publishBtns = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-publish-for]'))
+  const select = (name: string): void => {
+    buttons.forEach((b) => {
+      const on = b.dataset.tabBtn === name
+      b.classList.toggle('is-active', on)
+      b.setAttribute('aria-selected', String(on))
+    })
+    panels.forEach((p) => {
+      p.hidden = p.dataset.tabPanel !== name
+    })
+    publishBtns.forEach((b) => {
+      b.hidden = b.dataset.publishFor !== name
+    })
   }
-}
-
-function schedulePoll(): void {
-  stopPolling()
-  pollTimer = window.setTimeout(() => {
-    void refreshDeploy()
-  }, POLL_MS)
-}
-
-function formatTime(iso: string | null): string {
-  if (!iso) return ''
-  const d = new Date(iso)
-  const sameDay = d.toDateString() === new Date().toDateString()
-  return sameDay
-    ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    : d.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-}
-
-function renderDeploy(status: DeployStatus): void {
-  ui.deployRefresh.hidden = false
-  ui.deployPill.hidden = false
-  let cls = 'pill'
-  let text: string
-  switch (status.state) {
-    case 'none':
-      text = 'No site builds yet'
-      break
-    case 'queued':
-      text = 'Build queued…'
-      cls += ' pill--busy'
-      break
-    case 'building':
-      text = 'Building the site…'
-      cls += ' pill--busy'
-      break
-    case 'live':
-      text = `Live — updated ${formatTime(status.finishedAt)}`
-      cls += ' pill--live'
-      break
-    case 'failed':
-      text = 'Build failed — check GitHub Actions'
-      cls += ' pill--failed'
-      break
-  }
-  ui.deployPill.className = cls
-  ui.deployPill.textContent = text
-}
-
-async function refreshDeploy(): Promise<void> {
-  if (!state.tokenValid) return
-  try {
-    const status = await fetchDeployStatus(state.token)
-    // Right after a publish the API may still report the previous run as the
-    // latest — keep showing "queued" and polling until a run created after the
-    // publish appears (capped, in case no run ever starts).
-    const staleRun =
-      publishedAt !== 0 &&
-      (status.createdAt === null || new Date(status.createdAt).getTime() < publishedAt)
-    if (staleRun && Date.now() - publishedAt < PUBLISH_RUN_WAIT_MS) {
-      renderDeploy({ state: 'queued', finishedAt: null, createdAt: null })
-      schedulePoll()
-      return
-    }
-    renderDeploy(status)
-    if (status.state === 'queued' || status.state === 'building') schedulePoll()
-    else stopPolling()
-  } catch (err) {
-    ui.deployRefresh.hidden = false
-    ui.deployPill.hidden = false
-    ui.deployPill.className = 'pill pill--failed'
-    ui.deployPill.textContent = errText(err)
-    stopPolling()
-  }
+  buttons.forEach((b) => b.addEventListener('click', () => select(b.dataset.tabBtn as string)))
 }
 
 /* ----------------------------------- wiring ---------------------------------- */
@@ -577,12 +529,9 @@ function bindEvents(): void {
   ui.publishBtn.addEventListener('click', () => {
     void publish()
   })
-  ui.deployRefresh.addEventListener('click', () => {
-    void refreshDeploy()
-  })
 
   window.addEventListener('beforeunload', (e) => {
-    if (!isDirty()) return
+    if (!anyDirty()) return
     e.preventDefault()
     e.returnValue = ''
   })
@@ -590,6 +539,13 @@ function bindEvents(): void {
 
 function init(): void {
   ui.helpRepo.textContent = `${SITE.owner}/${SITE.repo}`
+  initTabs()
+  initDeploy({
+    pill: ui.deployPill,
+    refreshBtn: ui.deployRefresh,
+    getToken: () => state.token,
+    isValid: () => state.tokenValid,
+  })
   bindEvents()
   const saved = localStorage.getItem(TOKEN_KEY)
   if (saved) {

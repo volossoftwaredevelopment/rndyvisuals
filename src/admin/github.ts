@@ -65,6 +65,97 @@ interface RepoInfo {
   permissions?: { push?: boolean }
 }
 
+/* ------------------------------------------------------------------ generic
+ * File-level helpers used by the Contacts and Sponsors panels. `fetchTextFile`
+ * + `putTextFile` handle a single JSON manifest (Contacts). `commitFiles` bundles
+ * a manifest plus any number of binary assets (logos) into ONE commit — so a
+ * sponsor edit triggers a single Pages build, not one per uploaded file.       */
+
+export interface RepoFile {
+  text: string
+  sha: string
+}
+
+/** Read a UTF-8 text file from the repo. Throws GitHubError(404) if missing. */
+export async function fetchTextFile(token: string, path: string): Promise<RepoFile> {
+  const data = await api<ContentsResponse>(token, `/repos/${REPO}/contents/${path}?ref=${SITE.branch}`)
+  return { text: decodeBase64Utf8(data.content), sha: data.sha }
+}
+
+/** Commit UTF-8 text (create when sha is '', update in place otherwise). */
+export async function putTextFile(
+  token: string,
+  path: string,
+  text: string,
+  sha: string,
+  message: string,
+): Promise<string> {
+  const body: Record<string, unknown> = {
+    message,
+    content: encodeBase64Utf8(text),
+    branch: SITE.branch,
+  }
+  if (sha) body.sha = sha
+  const res = await api<PutContentsResponse>(token, `/repos/${REPO}/contents/${path}`, {
+    method: 'PUT',
+    body: JSON.stringify(body),
+  })
+  return res.content.sha
+}
+
+export interface CommitFile {
+  path: string
+  /** UTF-8 text or base64 bytes, matching `encoding`. */
+  content: string
+  encoding: 'utf-8' | 'base64'
+}
+
+interface RefResponse {
+  object: { sha: string }
+}
+interface CommitResponse {
+  sha: string
+  tree: { sha: string }
+}
+interface ShaResponse {
+  sha: string
+}
+
+/**
+ * Commit several files (a manifest + uploaded assets) in a single commit via the
+ * Git Data API, then fast-forward `main`. One commit → one Pages build. Fails
+ * cleanly if the branch moved underneath us (the ref update is not forced).
+ */
+export async function commitFiles(token: string, files: CommitFile[], message: string): Promise<void> {
+  const ref = await api<RefResponse>(token, `/repos/${REPO}/git/ref/heads/${SITE.branch}`)
+  const headSha = ref.object.sha
+  const headCommit = await api<CommitResponse>(token, `/repos/${REPO}/git/commits/${headSha}`)
+
+  const blobs = await Promise.all(
+    files.map((f) =>
+      api<ShaResponse>(token, `/repos/${REPO}/git/blobs`, {
+        method: 'POST',
+        body: JSON.stringify({ content: f.content, encoding: f.encoding }),
+      }),
+    ),
+  )
+  const tree = await api<ShaResponse>(token, `/repos/${REPO}/git/trees`, {
+    method: 'POST',
+    body: JSON.stringify({
+      base_tree: headCommit.tree.sha,
+      tree: files.map((f, i) => ({ path: f.path, mode: '100644', type: 'blob', sha: blobs[i].sha })),
+    }),
+  })
+  const commit = await api<ShaResponse>(token, `/repos/${REPO}/git/commits`, {
+    method: 'POST',
+    body: JSON.stringify({ message, tree: tree.sha, parents: [headSha] }),
+  })
+  await api<unknown>(token, `/repos/${REPO}/git/refs/heads/${SITE.branch}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ sha: commit.sha }),
+  })
+}
+
 /** Throws a GitHubError with a human message when the token can't read or write the repo. */
 export async function validateToken(token: string): Promise<void> {
   const repo = await api<RepoInfo>(token, `/repos/${REPO}`)

@@ -1,0 +1,13 @@
+{
+  "sponsors": [
+    { "id": "davinci", "name": "DaVinci Resolve", "logo": "davinci.png" },
+    { "id": "bmw", "name": "BMW", "logo": "bmw.png" },
+    { "id": "rolex", "name": "Rolex", "logo": "rolex.png" },
+    { "id": "maserati", "name": "Maserati", "logo": "maserati.svg" },
+    { "id": "prada", "name": "Prada", "logo": "prada.png" },
+    { "id": "sony", "name": "Sony", "logo": "sony.png" },
+    { "id": "helly-hansen", "name": "Helly Hansen", "logo": "helly-hansen.png" },
+    { "id": "musto", "name": "Musto", "logo": "musto.png" },
+    { "id": "nautor-swan", "name": "Nautor Swan", "logo": "nautor-swan.png" }
+  ]
+}

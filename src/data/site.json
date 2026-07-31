@@ -1,0 +1,19 @@
+{
+  "hero": {
+    "brand": "RNDY VISUALS",
+    "slogan": "FILMMAKER — AVAILABLE WORLDWIDE"
+  },
+  "contacts": {
+    "instagram": "https://www.instagram.com/rndyvisuals/",
+    "youtube": "https://www.youtube.com/@OnthewavewithIvan",
+    "whatsapp": "https://wa.me/306934631572",
+    "whatsappLabel": "+30 693 463 1572",
+    "telegram": "https://t.me/rndyvisuals",
+    "linkedin": "https://www.linkedin.com/company/rndyvisuals",
+    "x": "https://x.com/rndyvisuals",
+    "email": "hello@rndyvisuals.com"
+  },
+  "sponsors": {
+    "enabled": true
+  }
+}

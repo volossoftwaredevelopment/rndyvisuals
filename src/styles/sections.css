@@ -9,6 +9,23 @@
   border-bottom: 1px solid var(--line-strong);
 }
 
+/* panel disabled in the admin (or no sponsors) — a slim centred hairline stands
+   in for the marquee so the page still has a graceful divider here */
+.sponsors--off {
+  background: transparent;
+  border-top: 0;
+  border-bottom: 0;
+  display: flex;
+  justify-content: center;
+  padding: clamp(2.25rem, 5vw, 3.75rem) 0;
+}
+
+.sponsors__divider {
+  width: min(160px, 40vw);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--line-strong), transparent);
+}
+
 .sponsors__viewport {
   overflow: hidden;
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);

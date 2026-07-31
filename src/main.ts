@@ -16,6 +16,7 @@ import Lenis from 'lenis'
 
 import rawManifest from './data/videos.json'
 import type { Manifest } from './types'
+import { HERO, SPONSORS, SPONSORS_ENABLED } from './data/content'
 import { mountShell } from './lib/shell'
 import { initMagnetics } from './modules/magnetic'
 import { initReveals } from './modules/reveals'
@@ -60,31 +61,32 @@ if (gridMount) {
   renderVideoGrid(gridMount, videos, { reduced, onOpen: (i) => void openOverlay(i) })
 }
 
-// sponsor marquee — logo images; one visible copy + an aria-hidden copy for the
-// seamless CSS loop (the duplicate is hidden under reduced motion)
-const SPONSORS = [
-  { name: 'DaVinci Resolve', file: 'davinci.png' },
-  { name: 'BMW', file: 'bmw.png' },
-  { name: 'Rolex', file: 'rolex.png' },
-  { name: 'Maserati', file: 'maserati.svg' },
-  { name: 'Prada', file: 'prada.png' },
-  { name: 'Sony', file: 'sony.png' },
-  { name: 'Helly Hansen', file: 'helly-hansen.png' },
-  { name: 'Musto', file: 'musto.png' },
-  { name: 'Nautor Swan', file: 'nautor-swan.png' },
-]
+// sponsor marquee (from the editable sponsors manifest). When the panel is off
+// in the admin, or there are no sponsors, show a slim divider instead.
+const sponsorsSection = document.querySelector<HTMLElement>('.sponsors')
 const sponsorTrack = document.querySelector<HTMLElement>('[data-sponsors]')
-if (sponsorTrack) {
-  const logo = (s: { name: string; file: string }, dup: boolean): string =>
-    `<img class="sponsors__logo${dup ? ' is-dup' : ''}" src="./sponsors/${s.file}" alt="${dup ? '' : s.name}"${dup ? ' aria-hidden="true"' : ''} loading="lazy" />`
-  const setAlt = SPONSORS.map((s) => logo(s, false)).join('')
-  const setDup = SPONSORS.map((s) => logo(s, true)).join('')
-  // Each half = REPEAT sets so the track is wide enough that even a 27"+ screen
-  // never shows a gap; both halves are visually identical for a seamless -50% loop.
-  const REPEAT = 3
-  const half = setAlt + setDup.repeat(REPEAT - 1)
-  sponsorTrack.innerHTML = half + setDup.repeat(REPEAT)
+if (sponsorsSection) {
+  if (!SPONSORS_ENABLED || SPONSORS.length === 0) {
+    sponsorsSection.classList.add('sponsors--off')
+    sponsorsSection.innerHTML = '<span class="sponsors__divider" aria-hidden="true"></span>'
+  } else if (sponsorTrack) {
+    const logo = (s: { name: string; logo: string }, dup: boolean): string =>
+      `<img class="sponsors__logo${dup ? ' is-dup' : ''}" src="./sponsors/${s.logo}" alt="${dup ? '' : s.name}"${dup ? ' aria-hidden="true"' : ''} loading="lazy" />`
+    const setAlt = SPONSORS.map((s) => logo(s, false)).join('')
+    const setDup = SPONSORS.map((s) => logo(s, true)).join('')
+    // Each half = REPEAT sets so the track is wide enough that even a 27"+ screen
+    // never shows a gap; both halves are identical for a seamless -50% loop.
+    const REPEAT = 3
+    const half = setAlt + setDup.repeat(REPEAT - 1)
+    sponsorTrack.innerHTML = half + setDup.repeat(REPEAT)
+  }
 }
+
+// hero brand + slogan from the editable site manifest
+const heroBrandLine = document.querySelector<HTMLElement>('.hero__brand-line')
+if (heroBrandLine) heroBrandLine.textContent = HERO.brand
+const heroSloganEl = document.querySelector<HTMLElement>('.hero__slogan')
+if (heroSloganEl) heroSloganEl.textContent = HERO.slogan
 
 /* ----------------------------------------------- matchMedia contexts */
 
