@@ -99,66 +99,40 @@ export function renderVideoGrid(mount: HTMLElement, videos: VideoEntry[], opts: 
     if (tile) gsap.set(tile, { opacity: 1, y: 0 })
   })
 
-  // reduced motion / no file sources — posters stay, nothing autoplays
+  // reduced motion / no file sources — posters stay, nothing plays
   if (opts.reduced || media.length === 0) return
 
-  // Videos autoplaying while in view; tracked so they can resume after a tab
-  // switch (an IntersectionObserver does not re-fire on visibilitychange).
-  const inView = new Set<HTMLVideoElement>()
+  // Play on hover (desktop, fine pointer): the film starts when the cursor is
+  // over the tile and returns to its poster on leave. On touch devices there is
+  // no hover — the tile tap opens the overlay and the poster stays.
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return
 
-  const io = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((e) => {
-        const v = e.target as HTMLVideoElement
-        const tile = v.closest('.tile')
-        if (e.isIntersecting) {
-          inView.add(v)
-          if (v.dataset.src && !v.getAttribute('src')) {
-            v.src = v.dataset.src
-            v.load()
-          }
-          v.play()
-            .then(() => tile?.classList.add('is-playing'))
-            .catch(() => {
-              /* autoplay blocked — poster remains */
-            })
-        } else {
-          inView.delete(v)
-          v.pause()
-          // fall back to the poster instead of freezing on the last frame
-          tile?.classList.remove('is-playing')
-        }
-      })
-    },
-    { rootMargin: '200px 0px', threshold: 0.15 },
-  )
+  const playing = new Set<HTMLVideoElement>()
 
-  media.forEach((v) => io.observe(v))
-
-  // If the browser blocked muted autoplay, retry the in-view videos on the
-  // first user gesture (scroll/click/key) — the poster shows until then.
-  const unlock = (): void => {
-    inView.forEach((v) =>
-      v
-        .play()
-        .then(() => v.closest('.tile')?.classList.add('is-playing'))
-        .catch(() => {}),
-    )
-  }
-  ;(['pointerdown', 'touchstart', 'keydown', 'wheel'] as const).forEach((ev) =>
-    window.addEventListener(ev, unlock, { once: true, passive: true }),
-  )
+  media.forEach((v) => {
+    const tile = v.closest<HTMLElement>('.tile')
+    if (!tile) return
+    tile.addEventListener('pointerenter', () => {
+      if (v.dataset.src && !v.getAttribute('src')) {
+        v.src = v.dataset.src
+        v.load()
+      }
+      playing.add(v)
+      v.play()
+        .then(() => tile.classList.add('is-playing'))
+        .catch(() => {
+          /* play blocked — poster remains */
+        })
+    })
+    tile.addEventListener('pointerleave', () => {
+      playing.delete(v)
+      v.pause()
+      tile.classList.remove('is-playing')
+    })
+  })
 
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-      media.forEach((v) => v.pause())
-    } else {
-      // resume the tiles still in view — the observer will not re-fire for them
-      inView.forEach((v) => {
-        v.play()
-          .then(() => v.closest('.tile')?.classList.add('is-playing'))
-          .catch(() => {})
-      })
-    }
+    if (document.hidden) media.forEach((v) => v.pause())
+    else playing.forEach((v) => void v.play().catch(() => {}))
   })
 }

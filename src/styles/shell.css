@@ -156,11 +156,11 @@
   margin-bottom: clamp(1.75rem, 4vh, 2.5rem);
 }
 
-/* explicit sections: brand · contact · info(copyright) */
+/* explicit sections: brand · social · contact · info */
 .site-footer__grid {
   display: grid;
-  grid-template-columns: 1.6fr 1fr 1fr;
-  gap: 2rem 3rem;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr;
+  gap: 2rem 2.5rem;
   align-items: start;
 }
 
@@ -169,6 +169,23 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 0.7rem;
+}
+
+/* icon + label link */
+.site-footer__col a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.ico {
+  display: inline-flex;
+  color: var(--ink-mid);
+  transition: color 0.3s var(--ease-out-quart);
+}
+
+.site-footer__col a:hover .ico {
+  color: var(--accent);
 }
 
 .site-footer__brandcol {
@@ -227,7 +244,7 @@
   border-bottom: 1px solid var(--accent);
 }
 
-@media (max-width: 720px) {
+@media (max-width: 860px) {
   .site-footer__grid {
     grid-template-columns: 1fr 1fr;
     gap: 2.25rem 2rem;
@@ -237,7 +254,7 @@
   }
 }
 
-@media (max-width: 440px) {
+@media (max-width: 460px) {
   .site-footer__grid {
     grid-template-columns: 1fr;
   }
@@ -354,13 +371,58 @@
   border-bottom: 1px solid var(--accent);
 }
 
-/* contact page — stacked CTA buttons */
+/* contact page — grouped CTA buttons (Contact / Social) */
+.contact-group {
+  margin-top: clamp(2.25rem, 5vh, 3rem);
+}
+
+.contact-group__h {
+  color: var(--ink-low);
+  margin-bottom: 1.1rem;
+}
+
 .contact-links {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: clamp(1.1rem, 2.5vw, 1.75rem);
-  margin-top: clamp(2.25rem, 5vh, 3rem);
+  gap: clamp(1rem, 2.2vw, 1.5rem);
+}
+
+/* icon replaces the accent dot; hover shifts + fills with colour (no magnetic) */
+.contact-links .btn {
+  gap: 0.7rem;
+  transition:
+    transform 0.35s var(--ease-out-quart),
+    background-color 0.35s var(--ease-out-quart),
+    color 0.35s var(--ease-out-quart),
+    border-color 0.35s var(--ease-out-quart);
+}
+
+.contact-links .btn::before {
+  display: none;
+}
+
+.contact-links .btn .ico {
+  display: inline-flex;
+  color: var(--accent);
+  transition: color 0.35s var(--ease-out-quart);
+}
+
+.contact-links .btn:hover {
+  transform: translateX(10px);
+  background: var(--ink-hi);
+  color: var(--bg);
+  border-color: var(--ink-hi);
+}
+
+.contact-links .btn:hover .ico {
+  color: var(--bg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contact-links .btn:hover {
+    transform: none;
+  }
 }
 
 @media (max-width: 560px) {
@@ -369,7 +431,10 @@
   }
   .contact-links .btn {
     width: 100%;
-    justify-content: center;
+    justify-content: flex-start;
+  }
+  .contact-links .btn:hover {
+    transform: none;
   }
 }
 

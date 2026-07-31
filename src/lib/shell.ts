@@ -3,6 +3,7 @@
 // One source of truth so all pages stay identical.
 
 import { SITE } from '../site.config'
+import { iconLabel } from './icons'
 
 export type PageId = 'home' | 'about' | 'contact' | 'privacy'
 
@@ -47,6 +48,8 @@ function buildHeader(page: PageId): HTMLElement {
 function buildFooter(): HTMLElement {
   const footer = document.createElement('footer')
   footer.className = 'site-footer'
+  const ext = 'target="_blank" rel="noopener noreferrer"'
+  const nt = '<span class="sr-only"> (opens in a new tab)</span>'
   footer.innerHTML = `
     <span class="rule-line" data-reveal="rule" aria-hidden="true"></span>
     <div class="site-footer__grid">
@@ -55,19 +58,24 @@ function buildFooter(): HTMLElement {
         <p class="site-footer__tag micro">Videography — available worldwide</p>
       </div>
 
+      <nav class="site-footer__col" aria-label="Social">
+        <h2 class="site-footer__h micro">Social</h2>
+        <a href="${SITE.instagram}" ${ext}>${iconLabel('instagram', 'Instagram')}${nt}</a>
+        <a href="${SITE.youtube}" ${ext}>${iconLabel('youtube', 'YouTube')}${nt}</a>
+      </nav>
+
       <nav class="site-footer__col" aria-label="Contact">
         <h2 class="site-footer__h micro">Contact</h2>
-        <a href="${SITE.instagram}" target="_blank" rel="noopener noreferrer">Instagram<span class="sr-only"> (opens in a new tab)</span></a>
-        <a href="${SITE.youtube}" target="_blank" rel="noopener noreferrer">YouTube<span class="sr-only"> (opens in a new tab)</span></a>
-        <a href="${SITE.whatsappLink}" target="_blank" rel="noopener noreferrer">WhatsApp<span class="sr-only"> (opens in a new tab)</span></a>
-        <a href="mailto:${SITE.email}">Email</a>
+        <a href="${SITE.whatsappLink}" ${ext}>${iconLabel('whatsapp', 'WhatsApp')}${nt}</a>
+        <a href="${SITE.telegram}" ${ext}>${iconLabel('telegram', 'Telegram')}${nt}</a>
+        <a href="mailto:${SITE.email}">${iconLabel('email', 'Email')}</a>
       </nav>
 
       <div class="site-footer__col">
         <h2 class="site-footer__h micro">Info</h2>
         <span class="site-footer__copy">© 2026 RNDY VISUALS</span>
         <a href="./privacy.html">Privacy Policy</a>
-        <a class="site-footer__credit" href="${SITE.creditUrl}" target="_blank" rel="noopener noreferrer">Made with ${SITE.credit}<span class="sr-only"> (opens in a new tab)</span></a>
+        <a class="site-footer__credit" href="${SITE.creditUrl}" ${ext}>Made with ${SITE.credit}${nt}</a>
         <button type="button" class="site-footer__top" data-to-top>Back to top</button>
       </div>
     </div>
