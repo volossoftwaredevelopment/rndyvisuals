@@ -1,0 +1,75 @@
+// Mock shop products — videography courses, DaVinci grading, LUTs & masks.
+// Prices in EUR. Cover art is generated from `hue` (no image files).
+
+export interface Product {
+  id: string
+  title: string
+  category: string
+  price: number
+  blurb: string
+  features: string[]
+  hue: number
+}
+
+export const PRODUCTS: Product[] = [
+  {
+    id: 'cinematography',
+    title: 'Cinematography Masterclass',
+    category: 'Video Course',
+    price: 149,
+    hue: 210,
+    blurb:
+      'Six hours on shooting cinematic video — camera, movement, light and story, from the first setup to the final frame. Built for anyone who wants footage that looks intentional.',
+    features: ['6+ hours · 40 lessons', 'Camera, lenses & settings', 'Movement & composition', 'Lifetime access + updates'],
+  },
+  {
+    id: 'davinci-grade',
+    title: 'DaVinci Resolve: Colour Grading',
+    category: 'Video Course',
+    price: 129,
+    hue: 280,
+    blurb:
+      'A complete colour workflow in DaVinci Resolve — from balancing raw footage to building the looks that make an image feel expensive. Project files included.',
+    features: ['5 hours · project files', 'Primary & secondary grading', 'Building & saving looks', 'Resolve 18+'],
+  },
+  {
+    id: 'lut-pack',
+    title: 'The Cinematic LUT Pack',
+    category: 'Presets',
+    price: 39,
+    hue: 168,
+    blurb:
+      '24 hand-built LUTs for a filmic look in one click — tuned for skin, sky and water. Log and Rec.709 versions, works in any editor.',
+    features: ['24 .cube LUTs', 'Log & Rec.709 versions', 'Install guide', 'Free updates'],
+  },
+  {
+    id: 'sky-masks',
+    title: 'Sky & Water Masks',
+    category: 'Assets',
+    price: 29,
+    hue: 196,
+    blurb:
+      'A pack of ready-made sky and water masks and overlays to lift any establishing shot in seconds. 4K, alpha-ready, drag-and-drop.',
+    features: ['30 masks & overlays', '4K · alpha-ready', 'Drag-and-drop', 'Any editor'],
+  },
+  {
+    id: 'drone',
+    title: 'Drone Cinematography',
+    category: 'Video Course',
+    price: 99,
+    hue: 232,
+    blurb:
+      'Fly and film like a pro — the movements, settings and edits behind aerial footage that actually looks planned rather than lucky.',
+    features: ['4 hours', 'Core drone moves', 'Settings & safety', 'Editing aerials'],
+  },
+  {
+    id: 'sound',
+    title: 'Sound for Film',
+    category: 'Video Course',
+    price: 59,
+    hue: 254,
+    blurb:
+      'The half of film everyone forgets. How to record, clean and mix sound that carries a story instead of fighting it.',
+    features: ['3 hours', 'Recording & gear', 'Cleanup & mixing', 'Music & SFX'],
+  },
+]

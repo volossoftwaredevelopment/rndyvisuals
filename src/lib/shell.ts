@@ -4,6 +4,7 @@
 
 import { SITE } from '../site.config'
 import { iconLabel } from './icons'
+import { initCart } from './cart'
 
 export type PageId = 'home' | 'about' | 'contact' | 'privacy'
 
@@ -41,6 +42,10 @@ function buildHeader(page: PageId): HTMLElement {
     <nav class="site-nav" aria-label="Primary">
       ${NAV.map((n) => navLink(n, n.id === page)).join('')}
     </nav>
+    <button class="cart-btn" type="button" data-cart-toggle aria-label="Open cart">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+      <span class="cart-btn__count" data-cart-count hidden>0</span>
+    </button>
   `
   return header
 }
@@ -62,6 +67,8 @@ function buildFooter(): HTMLElement {
         <h2 class="site-footer__h micro">Social</h2>
         <a href="${SITE.instagram}" ${ext}>${iconLabel('instagram', 'Instagram')}${nt}</a>
         <a href="${SITE.youtube}" ${ext}>${iconLabel('youtube', 'YouTube')}${nt}</a>
+        <a href="${SITE.linkedin}" ${ext}>${iconLabel('linkedin', 'LinkedIn')}${nt}</a>
+        <a href="${SITE.x}" ${ext}>${iconLabel('x', 'X')}${nt}</a>
       </nav>
 
       <nav class="site-footer__col" aria-label="Contact">
@@ -185,6 +192,8 @@ export function mountShell(page: PageId, opts: { footer?: boolean } = {}): Shell
   grain.className = 'grain'
   grain.setAttribute('aria-hidden', 'true')
   document.body.appendChild(grain)
+
+  initCart()
 
   return { header, footer }
 }

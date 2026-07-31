@@ -1,9 +1,11 @@
 /* Home — full-bleed video hero (centered lockup) + tight video grid */
 
-/* hero centered over the reel, reilinjoey-style */
+/* hero centered over the reel, reilinjoey-style — ~35% shorter than full screen */
 .hero {
   align-items: center;
   text-align: center;
+  height: 65svh;
+  min-height: 440px;
 }
 
 /* The base scrim (components.css) only darkens the top/bottom edges — tuned for

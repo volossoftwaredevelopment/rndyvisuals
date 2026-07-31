@@ -12,6 +12,8 @@ export const SITE = {
   whatsapp: '+306934631572',
   whatsappLink: 'https://wa.me/306934631572',
   telegram: 'https://t.me/rndyvisuals',
+  linkedin: 'https://www.linkedin.com/company/rndyvisuals',
+  x: 'https://x.com/rndyvisuals',
   email: 'hello@rndyvisuals.com',
   credit: 'Volos Software Development',
   creditUrl: 'https://volossoftwaredevelopment.github.io/volossoftwareweb/',

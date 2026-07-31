@@ -8,6 +8,7 @@ import './styles/base.css'
 import './styles/components.css'
 import './styles/shell.css'
 import './styles/home.css'
+import './styles/sections.css'
 
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
@@ -19,6 +20,8 @@ import { mountShell } from './lib/shell'
 import { initMagnetics } from './modules/magnetic'
 import { initReveals } from './modules/reveals'
 import { renderVideoGrid } from './modules/videoGrid'
+import { initShop } from './modules/shop'
+import { initReviews } from './modules/reviews'
 import type { OverlayApi } from './modules/overlayPlayer'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -58,6 +61,31 @@ const gridMount = document.querySelector<HTMLElement>('[data-video-grid]')
 if (gridMount) {
   renderVideoGrid(gridMount, videos, { reduced, onOpen: (i) => void openOverlay(i) })
 }
+
+// sponsor marquee — names duplicated once for a seamless CSS loop
+const SPONSORS = [
+  'DaVinci Resolve',
+  'Nautor Swan',
+  'Rolex',
+  'BMW',
+  'G-Shock',
+  'Prada',
+  'RainAir',
+  'Sony',
+  'Western Digital',
+]
+const sponsorTrack = document.querySelector<HTMLElement>('[data-sponsors]')
+if (sponsorTrack) {
+  sponsorTrack.setAttribute('aria-hidden', 'true')
+  const seq = SPONSORS.map((s) => `<span class="sponsors__item">${s}</span>`).join('')
+  sponsorTrack.innerHTML = seq + seq
+}
+
+// our products + client reviews
+const shopMount = document.querySelector<HTMLElement>('[data-shop]')
+if (shopMount) initShop(shopMount)
+const reviewsMount = document.querySelector<HTMLElement>('[data-reviews]')
+if (reviewsMount) initReviews(reviewsMount)
 
 /* ----------------------------------------------- matchMedia contexts */
 
