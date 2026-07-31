@@ -19,35 +19,41 @@
   display: flex;
   width: max-content;
   align-items: center;
-  padding: 1.15rem 0;
-  animation: sponsors-scroll 48s linear infinite;
+  padding: 1.5rem 0;
+  /* long duration so the wide (repeated) track scrolls at a calm pace and never
+     shows a gap on large monitors */
+  animation: sponsors-scroll 90s linear infinite;
 }
 
 .sponsors:hover .sponsors__track {
   animation-play-state: paused;
 }
 
-/* margin (not flex gap) so the two copies tile seamlessly under translateX(-50%) */
+/* margin (not flex gap) so the copies tile seamlessly under translateX(-50%) */
 .sponsors__logo {
   flex: none;
-  height: 30px;
+  height: 48px;
   width: auto;
-  max-width: 150px;
+  max-width: 210px;
   object-fit: contain;
-  margin-right: clamp(2.5rem, 5vw, 4.5rem);
-  /* muted greyscale on the light band; colour + full opacity on hover */
-  filter: grayscale(1);
-  opacity: 0.62;
+  margin-right: clamp(3rem, 6vw, 5.5rem);
+  opacity: 0.95;
   transition:
     opacity 0.3s var(--ease-out-quart),
-    filter 0.3s var(--ease-out-quart),
     transform 0.3s var(--ease-out-quart);
 }
 
 .sponsors__logo:hover {
-  filter: grayscale(0);
   opacity: 1;
   transform: scale(1.06);
+}
+
+@media (max-width: 560px) {
+  .sponsors__logo {
+    height: 38px;
+    max-width: 150px;
+    margin-right: 2.75rem;
+  }
 }
 
 @keyframes sponsors-scroll {

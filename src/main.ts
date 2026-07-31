@@ -77,8 +77,13 @@ const sponsorTrack = document.querySelector<HTMLElement>('[data-sponsors]')
 if (sponsorTrack) {
   const logo = (s: { name: string; file: string }, dup: boolean): string =>
     `<img class="sponsors__logo${dup ? ' is-dup' : ''}" src="./sponsors/${s.file}" alt="${dup ? '' : s.name}"${dup ? ' aria-hidden="true"' : ''} loading="lazy" />`
-  sponsorTrack.innerHTML =
-    SPONSORS.map((s) => logo(s, false)).join('') + SPONSORS.map((s) => logo(s, true)).join('')
+  const setAlt = SPONSORS.map((s) => logo(s, false)).join('')
+  const setDup = SPONSORS.map((s) => logo(s, true)).join('')
+  // Each half = REPEAT sets so the track is wide enough that even a 27"+ screen
+  // never shows a gap; both halves are visually identical for a seamless -50% loop.
+  const REPEAT = 3
+  const half = setAlt + setDup.repeat(REPEAT - 1)
+  sponsorTrack.innerHTML = half + setDup.repeat(REPEAT)
 }
 
 /* ----------------------------------------------- matchMedia contexts */

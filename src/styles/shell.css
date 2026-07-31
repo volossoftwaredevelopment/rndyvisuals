@@ -419,7 +419,10 @@
 }
 
 .page__title {
-  font-size: clamp(2.5rem, 7vw, 5.5rem);
+  /* vw-led so long single-word titles (e.g. VIDEOGRAPHY.) shrink to fit narrow
+     phones instead of being clipped by the page's overflow-x: clip */
+  font-size: clamp(1.85rem, 8vw, 5.5rem);
+  overflow-wrap: break-word;
 }
 
 .page__lede {
