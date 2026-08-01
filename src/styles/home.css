@@ -1,11 +1,12 @@
 /* Home — full-bleed video hero (centered lockup) + tight video grid */
 
-/* hero centered over the reel, reilinjoey-style — ~35% shorter than full screen */
+/* hero centered over the reel — full-screen so the film is the first thing that
+   grabs the visitor; the wordmark is a small label over it, not a headline */
 .hero {
   align-items: center;
   text-align: center;
-  height: 65svh;
-  min-height: 440px;
+  height: 100svh;
+  min-height: 480px;
 }
 
 /* The base scrim (components.css) only darkens the top/bottom edges — tuned for
@@ -44,20 +45,18 @@
   display: block;
 }
 
-/* Sized so the 11-char wordmark fits on one line without clipping across the
-   full range: "RNDYVISUALS" is ~9x the font-size wide, so the vw coefficient
-   must keep 9 x font-size below the viewport minus the lockup's side padding.
-   11vw overflowed (and was silently clipped by .hero__brand-mask) on every
-   viewport below ~1220px; 9vw fits from 320px up. */
+/* Small brand label over the film (~1/3 of the former headline size) so the
+   video is the hero and the wordmark just anchors it. Stays one line easily at
+   this scale. */
 .hero__brand {
-  font-size: clamp(1.75rem, 9vw, 8rem);
+  font-size: clamp(1rem, 3vw, 2.6rem);
   line-height: 0.92;
   white-space: nowrap;
-  text-shadow: 0 2px 24px rgba(7, 11, 15, 0.55);
+  text-shadow: 0 1px 14px rgba(7, 11, 15, 0.6);
 }
 
 .hero__slogan {
-  margin-top: 1.5rem;
+  margin-top: 0.85rem;
   color: var(--ink);
   letter-spacing: 0.18em;
   text-shadow: 0 1px 14px rgba(7, 11, 15, 0.6);
