@@ -11,3 +11,4 @@ dist/
 secret.env
 *.pem
 *.key
+.setup-credentials.json

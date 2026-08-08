@@ -64,6 +64,12 @@ body {
   color: var(--ink-mid, #7c8a8e);
 }
 
+.admin-head__actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
 /* ------------------------------- panels ------------------------------- */
 
 .panel {

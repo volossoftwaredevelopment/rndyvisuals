@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex,nofollow" />
+    <meta name="color-scheme" content="dark" />
+    <title>RNDY — вход в админку</title>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; min-height: 100svh; display: grid; place-items: center;
+        background: #070b0f; color: #b8c4c6; padding: 24px;
+        font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+      }
+      .card { width: min(420px, 100%); }
+      .brand {
+        font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+        color: #eaf0ef; font-size: 0.8125rem; margin-bottom: 6px;
+      }
+      .sub {
+        font-size: 0.6875rem; letter-spacing: 0.1em; text-transform: uppercase;
+        color: #7c8a8e; margin-bottom: 28px;
+      }
+      label { display: block; font-size: 0.6875rem; letter-spacing: 0.08em;
+        text-transform: uppercase; color: #7c8a8e; margin-bottom: 8px; }
+      input[type='password'] {
+        width: 100%; font: inherit; color: #eaf0ef; background: #131c24;
+        border: 1px solid #1c2730; border-radius: 4px; padding: 12px 14px;
+        letter-spacing: 0.06em;
+      }
+      input:focus { outline: none; border-color: #2c3a45; }
+      input:focus-visible { outline: 1px solid #5fc9ba; outline-offset: 2px; }
+      button {
+        width: 100%; margin-top: 16px; font: inherit; font-size: 0.8125rem;
+        font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+        color: #5fc9ba; background: #131c24; border: 1px solid #2e5f58;
+        border-radius: 4px; padding: 12px 16px; cursor: pointer; transition: opacity 0.2s;
+      }
+      button:hover:not(:disabled) { opacity: 0.8; }
+      button:disabled { color: #4e5b60; border-color: #1c2730; cursor: default; }
+      .msg { margin-top: 14px; font-size: 0.8125rem; min-height: 1.2em; }
+      .msg.err { color: #d08770; }
+      .msg.ok { color: #5fc9ba; }
+      .turnstile { margin-top: 16px; min-height: 65px; }
+      .hint { margin-top: 22px; font-size: 0.75rem; line-height: 1.6; color: #4e5b60; }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <div class="brand">RNDY — ADMIN</div>
+      <div class="sub">Вход в панель управления</div>
+
+      <form id="form" autocomplete="off">
+        <label for="pw">Пароль</label>
+        <input id="pw" type="password" autocomplete="current-password" autofocus
+               placeholder="XXXX-XXXX-XXXX-XXXX" aria-describedby="msg" />
+        <div class="turnstile cf-turnstile"
+             data-sitekey="0x4AAAAAAEKX5QA8-azjZsbz"
+             data-theme="dark"
+             data-callback="onCaptcha"
+             data-expired-callback="onCaptchaExpired"
+             data-error-callback="onCaptchaExpired"></div>
+        <button id="btn" type="submit" disabled>Проверка…</button>
+      </form>
+
+      <p class="msg" id="msg" role="status" aria-live="polite"></p>
+      <p class="hint">
+        Пароль выдан при настройке (см. PDF на рабочем столе). Сменить его можно
+        внутри админки. После 8 неудачных попыток вход блокируется на 15 минут.
+      </p>
+    </main>
+
+    <script>
+      var captchaToken = ''
+      var btn = document.getElementById('btn')
+      var msg = document.getElementById('msg')
+
+      function say(text, kind) {
+        msg.textContent = text
+        msg.className = 'msg' + (kind ? ' ' + kind : '')
+      }
+      window.onCaptcha = function (token) {
+        captchaToken = token
+        btn.disabled = false
+        btn.textContent = 'Войти'
+        say('')
+      }
+      window.onCaptchaExpired = function () {
+        captchaToken = ''
+        btn.disabled = true
+        btn.textContent = 'Проверка…'
+        say('Проверка устарела — обновите страницу.', 'err')
+      }
+      // If Turnstile can't load at all, don't strand the owner behind a dead gate.
+      setTimeout(function () {
+        if (!captchaToken && typeof window.turnstile === 'undefined') {
+          btn.disabled = false
+          btn.textContent = 'Войти'
+        }
+      }, 6000)
+
+      document.getElementById('form').addEventListener('submit', async function (e) {
+        e.preventDefault()
+        var pw = document.getElementById('pw').value
+        if (!pw) return say('Введите пароль.', 'err')
+        btn.disabled = true
+        btn.textContent = 'Вход…'
+        say('')
+        try {
+          var r = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ password: pw, turnstileToken: captchaToken }),
+          })
+          var d = await r.json().catch(function () { return {} })
+          if (r.ok && d.ok) {
+            say('Готово — открываю админку…', 'ok')
+            location.href = '/admin.html'
+            return
+          }
+          say(d.error || 'Не удалось войти.', 'err')
+        } catch (err) {
+          say('Сеть недоступна. Попробуйте ещё раз.', 'err')
+        }
+        btn.disabled = false
+        btn.textContent = 'Войти'
+        if (window.turnstile) { try { window.turnstile.reset() } catch (e) {} }
+        captchaToken = ''
+      })
+    </script>
+  </body>
+</html>

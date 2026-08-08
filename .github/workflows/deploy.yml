@@ -44,6 +44,15 @@ jobs:
             echo "::error::Site JS exceeds the 90 KB gzip budget (spec §6)"
             exit 1
           fi
+      # The admin is protected by Vercel edge middleware, which GitHub Pages
+      # cannot run — so the admin must NOT be published to Pages at all,
+      # otherwise it would be reachable there with no password.
+      - name: Strip admin from the Pages build
+        run: |
+          rm -f dist/admin.html dist/admin-login.html
+          rm -f dist/assets/admin-*.js dist/assets/admin-*.css
+          echo "admin files remaining in dist:"
+          find dist -name 'admin*' -print
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

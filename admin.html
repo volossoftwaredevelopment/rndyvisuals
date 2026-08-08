@@ -16,8 +16,40 @@
     <main class="admin">
       <header class="admin-head">
         <span class="admin-wordmark">RNDY — ADMIN</span>
-        <span class="admin-sub">Site content manager</span>
+        <span class="admin-head__actions">
+          <button id="pw-open" class="btn btn--ghost btn--sm" type="button">Сменить пароль</button>
+          <button id="logout" class="btn btn--ghost btn--sm" type="button">Выйти</button>
+        </span>
       </header>
+
+      <section class="panel" id="panel-password" hidden>
+        <div class="panel-head">
+          <h2 class="panel-title">Смена пароля</h2>
+        </div>
+        <div class="form">
+          <label class="fld">
+            <span class="fld-label">Текущий пароль</span>
+            <input id="pw-current" class="field" type="password" autocomplete="current-password" />
+          </label>
+          <label class="fld">
+            <span class="fld-label">Новый пароль (минимум 10 символов)</span>
+            <input id="pw-next" class="field" type="password" autocomplete="new-password" />
+          </label>
+          <label class="fld">
+            <span class="fld-label">Повторите новый пароль</span>
+            <input id="pw-repeat" class="field" type="password" autocomplete="new-password" />
+          </label>
+          <p class="help">
+            После смены пароля вход выполняется заново. Запишите новый пароль — восстановить его
+            нельзя, только сбросить через разработчика.
+          </p>
+          <p class="msg" id="pw-msg" role="status" aria-live="polite" hidden></p>
+          <div class="publish-row">
+            <button id="pw-save" class="btn btn--primary" type="button">Сохранить пароль</button>
+            <button id="pw-cancel" class="btn btn--ghost" type="button">Отмена</button>
+          </div>
+        </div>
+      </section>
 
       <section class="panel" id="panel-token">
         <div class="panel-head">

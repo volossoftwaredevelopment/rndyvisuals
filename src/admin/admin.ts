@@ -16,6 +16,7 @@ import { attachListDnd } from './dnd'
 import { createContactsPanel } from './contacts'
 import { createSponsorsPanel } from './sponsors'
 import { createProductsPanel } from './products'
+import { initAccount } from './account'
 import type { AdminCtx, Panel } from './panel'
 import type { SourceType, VideoEntry } from './types'
 
@@ -776,6 +777,7 @@ function bindEvents(): void {
 
 function init(): void {
   ui.helpRepo.textContent = `${SITE.owner}/${SITE.repo}`
+  initAccount()
   initTabs()
   initDeploy({
     pill: ui.deployPill,
