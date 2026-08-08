@@ -30,9 +30,14 @@ export default async function handler(req, res) {
 
     const { password, turnstileToken } = await readJson(req)
 
-    if (!(await verifyTurnstile(turnstileToken, ip))) {
+    const captcha = await verifyTurnstile(turnstileToken, ip)
+    if (captcha === 'failed') {
       await logEvent('login_failed', ip)
       return res.status(400).json({ error: 'Проверка «я не робот» не пройдена. Обновите страницу.' })
+    }
+    if (captcha === 'unavailable') {
+      // не блокируем владельца, но фиксируем в журнале
+      await logEvent('captcha_skipped', ip)
     }
 
     if (typeof password !== 'string' || password.length === 0) {

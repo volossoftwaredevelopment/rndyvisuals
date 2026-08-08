@@ -87,10 +87,20 @@ export function requireSession(req) {
 
 /* -------------------------------------------------------------- turnstile */
 
+/**
+ * Returns 'ok' | 'failed' | 'unavailable'.
+ *
+ * Only an explicit rejection from Cloudflare ('failed') blocks a login. A missing
+ * token or an unreachable siteverify service degrades to 'unavailable' so a
+ * Cloudflare outage — or the widget being blocked in the owner's browser — can
+ * never lock the owner out of their own site. The password (82 bits of entropy)
+ * plus the per-IP attempt throttle remain the actual gate; the captcha is a
+ * bot-speed-bump layered on top.
+ */
 export async function verifyTurnstile(token, ip) {
   const secret = process.env.TURNSTILE_SECRET_KEY
-  if (!secret) return true // not configured → don't lock the owner out
-  if (!token) return false
+  if (!secret) return 'unavailable'
+  if (!token) return 'unavailable'
   try {
     const body = new URLSearchParams({ secret, response: token })
     if (ip) body.set('remoteip', ip)
@@ -98,10 +108,11 @@ export async function verifyTurnstile(token, ip) {
       method: 'POST',
       body,
     })
+    if (!r.ok) return 'unavailable'
     const d = await r.json()
-    return d.success === true
+    return d.success === true ? 'ok' : 'failed'
   } catch {
-    return false
+    return 'unavailable'
   }
 }
 
