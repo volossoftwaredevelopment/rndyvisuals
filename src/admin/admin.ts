@@ -17,6 +17,7 @@ import { createContactsPanel } from './contacts'
 import { createSponsorsPanel } from './sponsors'
 import { createProductsPanel } from './products'
 import { initAccount } from './account'
+import { LIMITS, checkFile, formatBytes, uploadToR2 } from './r2upload'
 import type { AdminCtx, Panel } from './panel'
 import type { SourceType, VideoEntry } from './types'
 
@@ -70,48 +71,17 @@ const sponsorsPanel = createSponsorsPanel(ctx)
 const productsPanel = createProductsPanel(ctx)
 const extraPanels: Panel[] = [contactsPanel, sponsorsPanel, productsPanel]
 
-/* ----------------------------- media staging ------------------------------ */
-// Uploaded clips (and their auto-generated posters) are held in memory until
-// Publish, then committed alongside videos.json in ONE commit.
+/* -------------------------------- media ---------------------------------- */
+// Films and their posters upload straight to Cloudflare R2 (see r2upload.ts) and
+// are served from media.rndyvisuals.com. Only videos.json is committed to git,
+// so a 2 GB master is fine and the repository never grows.
 
-const MEDIA_DIR = 'public/media'
-const MAX_VIDEO_BYTES = 60 * 1024 * 1024
-const OK_VIDEO = /^video\/(mp4|webm|quicktime)$/
-
-interface StagedFile {
-  base64: string
-  /** data: URL for a poster preview (posters only) */
-  dataUrl?: string
-}
-
-// keyed by repo path, e.g. "public/media/film-a1b2.mp4"
-const stagedMedia = new Map<string, StagedFile>()
-
-/** './media/x.mp4' -> 'public/media/x.mp4' */
-function toRepoPath(siteUrl: string): string {
-  return `${MEDIA_DIR}/${siteUrl.split('/').pop() ?? ''}`
-}
-
-// Cheap, deterministic content tag: same file -> same name (idempotent + cache
-// busting), different file -> different name. Sampled so 60 MB stays instant.
-function shortHash(s: string): string {
-  let h = 2166136261 >>> 0
-  const step = Math.max(1, Math.floor(s.length / 4096))
-  for (let i = 0; i < s.length; i += step) {
-    h ^= s.charCodeAt(i)
-    h = Math.imul(h, 16777619) >>> 0
-  }
-  h ^= s.length
-  return (h >>> 0).toString(36)
-}
-
-function bytesToBase64(bytes: Uint8Array): string {
-  let bin = ''
-  const chunk = 0x8000
-  for (let i = 0; i < bytes.length; i += chunk) {
-    bin += String.fromCharCode(...bytes.subarray(i, i + chunk))
-  }
-  return btoa(bin)
+/** Fills the on-screen limits so the UI and the server rules can't drift apart. */
+function paintLimits(): void {
+  const v = document.querySelector<HTMLElement>('[data-limit-video]')
+  if (v) v.textContent = LIMITS.video.label
+  const cap = document.querySelector<HTMLElement>('[data-limit-video-max]')
+  if (cap) cap.textContent = formatBytes(LIMITS.video.maxBytes)
 }
 
 // Keep the real container extension so GitHub Pages serves the right MIME.
@@ -180,32 +150,41 @@ function posterFromVideo(file: File): Promise<{ base64: string; dataUrl: string 
 }
 
 /**
- * Read a chosen video file, generate its poster, and stage both. Returns the
- * site-relative { url, poster } to store on the entry, or an error string.
- * Never throws — an unreadable file surfaces as an error string.
+ * Upload a chosen film straight to R2 and generate its poster (also uploaded).
+ * Returns the public { url, poster } to store on the entry, or an error string.
+ * Never throws — every failure surfaces as a readable message.
+ *
+ * Videos no longer go into the git repository: a 2 GB master would not fit, and
+ * committed binaries bloat the repo forever. Only the manifest is committed.
  */
-async function stageVideo(file: File, seed: string): Promise<{ url: string; poster: string } | string> {
-  if (file.type && !OK_VIDEO.test(file.type)) return 'Use an MP4 (H.264), WebM or MOV file.'
-  if (file.size > MAX_VIDEO_BYTES) {
-    return `That file is ${(file.size / 1024 / 1024).toFixed(0)} MB — keep clips under 60 MB (web-encode first).`
-  }
+async function stageVideo(
+  file: File,
+  seed: string,
+  onProgress?: (fraction: number) => void,
+): Promise<{ url: string; poster: string } | string> {
+  const bad = checkFile(file, 'video')
+  if (bad) return bad
   try {
     const base = slugify(seed) || 'film'
     const ext = videoExt(file)
-    const bytes = new Uint8Array(await file.arrayBuffer())
-    const b64 = bytesToBase64(bytes)
-    const tag = shortHash(b64)
-    stagedMedia.set(`${MEDIA_DIR}/${base}-${tag}.${ext}`, { base64: b64 })
 
-    const poster = await posterFromVideo(file)
+    // poster first — it is small and gives instant visual feedback in the list
     let posterUrl = ''
+    const poster = await posterFromVideo(file)
     if (poster) {
-      stagedMedia.set(`${MEDIA_DIR}/${base}-${tag}.jpg`, { base64: poster.base64, dataUrl: poster.dataUrl })
-      posterUrl = `./media/${base}-${tag}.jpg`
+      try {
+        const blob = await (await fetch(poster.dataUrl)).blob()
+        const up = await uploadToR2(blob, `${base}-poster.jpg`, 'image')
+        posterUrl = up.url
+      } catch {
+        /* poster is optional — a missing one only means a blank tile until play */
+      }
     }
-    return { url: `./media/${base}-${tag}.${ext}`, poster: posterUrl }
-  } catch {
-    return 'Could not read that file — try again, or choose a different one.'
+
+    const up = await uploadToR2(file, `${base}.${ext}`, 'video', onProgress)
+    return { url: up.url, poster: posterUrl }
+  } catch (err) {
+    return err instanceof Error ? err.message : 'Не удалось загрузить файл.'
   }
 }
 
@@ -319,9 +298,9 @@ const ROW_HTML = `
   </div>
 `
 
+// Posters live on R2 now, so the stored URL is already directly displayable.
 function previewPoster(poster: string): string {
-  if (!poster) return ''
-  return stagedMedia.get(toRepoPath(poster))?.dataUrl ?? poster
+  return poster || ''
 }
 
 function buildRow(video: VideoEntry, index: number, total: number): HTMLLIElement {
@@ -430,7 +409,6 @@ async function loadVideos(): Promise<void> {
   setMsg(ui.videosMsg, 'Loading videos…', 'info')
   try {
     const { manifest } = await fetchManifest(state.token)
-    stagedMedia.clear()
     state.baseline = manifest.videos
     state.videos = structuredClone(manifest.videos)
     setMsg(ui.videosMsg, '')
@@ -448,7 +426,6 @@ function forgetToken(): void {
   state.tokenValid = false
   state.baseline = []
   state.videos = []
-  stagedMedia.clear()
   ui.tokenInput.value = ''
   ui.tokenDot.classList.remove('is-valid')
   ui.tokenForget.hidden = true
@@ -505,10 +482,16 @@ function titleFromFilename(name: string): string {
 }
 
 async function addFromFile(file: File): Promise<void> {
+  // instant, specific feedback before any network work happens
+  const bad = checkFile(file, 'video')
+  if (bad) return setMsg(ui.addMsg, bad, 'error')
+
   const title = titleFromFilename(file.name)
   setBusy(ui.addFile, true)
-  setMsg(ui.addMsg, 'Reading the video…', 'info')
-  const staged = await stageVideo(file, title || 'film')
+  setMsg(ui.addMsg, `Загрузка «${file.name}» (${formatBytes(file.size)}) — 0%`, 'info')
+  const staged = await stageVideo(file, title || 'film', (f) =>
+    setMsg(ui.addMsg, `Загрузка «${file.name}» — ${Math.round(f * 100)}%`, 'info'),
+  )
   setBusy(ui.addFile, false)
   if (typeof staged === 'string') {
     setMsg(ui.addMsg, staged, 'error')
@@ -516,8 +499,10 @@ async function addFromFile(file: File): Promise<void> {
   }
   setMsg(
     ui.addMsg,
-    staged.poster ? '' : 'Added — a poster frame could not be read, so the tile will be blank until it plays.',
-    staged.poster ? 'info' : 'info',
+    staged.poster
+      ? 'Видео загружено ✓ Не забудьте нажать «Publish».'
+      : 'Видео загружено ✓ Постер создать не удалось — плитка будет пустой до воспроизведения.',
+    'ok',
   )
   appendEntry({
     id: uniqueId(title || 'new-film'),
@@ -539,28 +524,27 @@ function addBlankPlaceholder(): void {
   })
 }
 
-// Free a row's previously-staged (not-yet-published) bytes, but never the ones
-// we just staged for it (guards the same-file re-pick case).
-function freeStaged(url: string | undefined, poster: string, keep: Set<string>): void {
-  for (const u of [url, poster]) {
-    if (!u) continue
-    const path = toRepoPath(u)
-    if (!keep.has(path)) stagedMedia.delete(path)
-  }
-}
-
 async function replaceVideo(id: string, file: File, statusEl: HTMLElement | null): Promise<void> {
   const found = state.videos.find((v) => v.id === id)
   if (!found) return
-  if (statusEl) statusEl.textContent = 'Reading…'
-  const staged = await stageVideo(file, found.title || found.id)
-  if (typeof staged === 'string') {
-    setMsg(ui.addMsg, staged, 'error')
+  const bad = checkFile(file, 'video')
+  if (bad) {
+    setMsg(ui.addMsg, bad, 'error')
     if (statusEl) statusEl.textContent = ''
     return
   }
-  const keep = new Set([toRepoPath(staged.url), ...(staged.poster ? [toRepoPath(staged.poster)] : [])])
-  freeStaged(found.source.type === 'file' ? found.source.url : undefined, found.poster, keep)
+  const show = (t: string): void => {
+    if (statusEl) statusEl.textContent = t
+  }
+  show('Загрузка 0%')
+  const staged = await stageVideo(file, found.title || found.id, (f) =>
+    show(`Загрузка ${Math.round(f * 100)}%`),
+  )
+  if (typeof staged === 'string') {
+    setMsg(ui.addMsg, staged, 'error')
+    show('')
+    return
+  }
   found.source = { type: 'file', url: staged.url }
   found.poster = staged.poster
   renderRows()
@@ -568,21 +552,11 @@ async function replaceVideo(id: string, file: File, statusEl: HTMLElement | null
   // renderRows() recreates the status node; set it next frame so the live region announces
   requestAnimationFrame(() => {
     const s = ui.rows.querySelector<HTMLElement>(`.row[data-id="${id}"] [data-status]`)
-    if (s) s.textContent = staged.poster ? 'New clip staged' : 'New clip staged (no poster)'
+    if (s) s.textContent = staged.poster ? 'Загружено ✓' : 'Загружено ✓ (без постера)'
   })
 }
 
 /* --------------------------------- publishing -------------------------------- */
-
-// media repo paths referenced by a set of entries (video url + poster)
-function referencedMedia(entries: VideoEntry[]): Set<string> {
-  const set = new Set<string>()
-  for (const v of entries) {
-    if (v.source.type === 'file' && v.source.url) set.add(toRepoPath(v.source.url))
-    if (v.poster) set.add(toRepoPath(v.poster))
-  }
-  return set
-}
 
 async function publish(): Promise<void> {
   if (state.publishing || !state.tokenValid || !isDirty()) return
@@ -607,6 +581,7 @@ async function publish(): Promise<void> {
       throw new Error('The videos changed on GitHub in another session — reload the page and re-apply your changes.')
     }
 
+    // Films and posters already live on R2 — only the manifest is committed.
     const files: CommitFile[] = [
       {
         path: SITE.manifestRepoPath,
@@ -614,23 +589,8 @@ async function publish(): Promise<void> {
         encoding: 'utf-8',
       },
     ]
-    // commit only uploaded media still referenced by a surviving entry
-    const referenced = referencedMedia(videos)
-    const committed = new Set<string>()
-    for (const [path, file] of stagedMedia) {
-      if (referenced.has(path)) {
-        files.push({ path, content: file.base64, encoding: 'base64' })
-        committed.add(path)
-      }
-    }
     await commitFiles(state.token, files, 'content: update videos via admin')
     state.baseline = videos
-    // Drop what we just committed and any staged media the working copy no longer
-    // references — but KEEP media staged mid-publish (referenced, not yet committed).
-    const live = referencedMedia(state.videos)
-    for (const path of [...stagedMedia.keys()]) {
-      if (committed.has(path) || !live.has(path)) stagedMedia.delete(path)
-    }
     setMsg(ui.publishMsg, 'Published — the site is rebuilding now.', 'ok')
     afterPublish()
   } catch (err) {
@@ -699,8 +659,8 @@ function bindEvents(): void {
       btn.closest('.row-media')?.querySelector<HTMLInputElement>('input[data-act="replace-video"]')?.click()
     } else if (act === 'delete') {
       const name = video.title.trim() || video.id
-      if (window.confirm(`Delete “${name}”? It disappears from the site on the next publish.`)) {
-        freeStaged(video.source.type === 'file' ? video.source.url : undefined, video.poster, new Set())
+      if (window.confirm(`Удалить «${name}»? Пропадёт с сайта после публикации.`)) {
+        // the file itself stays in R2 — removing it here only drops the entry
         state.videos.splice(index, 1)
         renderRows()
         updatePublishUI()
@@ -777,6 +737,7 @@ function bindEvents(): void {
 
 function init(): void {
   ui.helpRepo.textContent = `${SITE.owner}/${SITE.repo}`
+  paintLimits()
   initAccount()
   initTabs()
   initDeploy({

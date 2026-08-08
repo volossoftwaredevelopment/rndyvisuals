@@ -70,6 +70,39 @@ body {
   flex-wrap: wrap;
 }
 
+/* upload requirements block */
+.help--limits {
+  border: 1px solid var(--line, #1c2730);
+  border-left: 3px solid var(--accent-dim, #2e5f58);
+  border-radius: 4px;
+  padding: 12px 14px;
+  background: var(--surface, #0d141a);
+}
+
+.help--limits strong {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--ink-hi, #eaf0ef);
+}
+
+.help--limits ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.help--limits li {
+  margin-bottom: 3px;
+}
+
+.help__note {
+  display: block;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line, #1c2730);
+  color: var(--ink-low, #4e5b60);
+  font-size: 0.75rem;
+}
+
 /* ------------------------------- panels ------------------------------- */
 
 .panel {

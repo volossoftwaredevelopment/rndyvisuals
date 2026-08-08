@@ -122,10 +122,20 @@
                 hidden
                 aria-hidden="true"
               />
-              <p class="help">
-                Upload a web-encoded <strong>MP4 (H.264)</strong> under 60 MB — a poster frame is generated
-                automatically. Or use “Replace video” on a row to swap an existing film.
-              </p>
+              <div class="help help--limits">
+                <strong>Требования к видео</strong>
+                <ul>
+                  <li>Формат: <span data-limit-video>MP4 (H.264/H.265), MOV или WebM</span></li>
+                  <li>Максимальный размер: <span data-limit-video-max>2 ГБ</span> на файл</li>
+                  <li>Рекомендуется 1080p или 4K, H.264 — грузите исходное качество</li>
+                  <li>Постер-кадр создаётся автоматически из середины ролика</li>
+                </ul>
+                <span class="help__note">
+                  Файл уходит напрямую в облачное хранилище (Cloudflare R2), а не в репозиторий —
+                  поэтому размер большой, а сайт не тяжелеет. Если формат или размер не подходят,
+                  вы увидите ошибку сразу при выборе файла.
+                </span>
+              </div>
               <p class="msg" id="add-msg" role="status" aria-live="polite" hidden></p>
             </div>
             <p class="msg" id="publish-msg" hidden></p>

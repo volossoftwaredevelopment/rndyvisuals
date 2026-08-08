@@ -98,6 +98,59 @@ export function createOverlay(videos: VideoEntry[], ctx: OverlayCtx): OverlayApi
       video.src = src.url
       if (!ctx.reduced) video.autoplay = true
       media.appendChild(video)
+
+      // Quality menu — only when the entry actually ships more than one rendition.
+      const list = (src.renditions ?? []).filter((r) => r && r.url && r.label)
+      if (list.length > 1) {
+        const current = list.find((r) => r.url === src.url) ?? list[0]
+        const wrap = document.createElement('div')
+        wrap.className = 'quality'
+        wrap.innerHTML = `
+          <button type="button" class="quality__btn" aria-expanded="false" aria-haspopup="true">
+            <span class="quality__icon" aria-hidden="true">⚙</span>
+            <span class="quality__label">${current.label}</span>
+          </button>
+          <ul class="quality__menu" role="menu" hidden>
+            ${list
+              .map(
+                (r, i) =>
+                  `<li role="none"><button role="menuitemradio" type="button" class="quality__item" data-i="${i}" aria-checked="${r.url === current.url}">${r.label}</button></li>`,
+              )
+              .join('')}
+          </ul>`
+
+        const btn = wrap.querySelector<HTMLButtonElement>('.quality__btn')!
+        const menu = wrap.querySelector<HTMLElement>('.quality__menu')!
+        const labelEl = wrap.querySelector<HTMLElement>('.quality__label')!
+
+        const setOpen = (open: boolean): void => {
+          menu.hidden = !open
+          btn.setAttribute('aria-expanded', String(open))
+        }
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation()
+          setOpen(menu.hidden)
+        })
+        wrap.addEventListener('click', (e) => {
+          const item = (e.target as HTMLElement).closest<HTMLButtonElement>('.quality__item')
+          if (!item) return
+          const pick = list[Number(item.dataset.i)]
+          if (!pick || video.currentSrc === pick.url) return setOpen(false)
+          // keep the viewer's place and play state across the swap
+          const at = video.currentTime
+          const wasPlaying = !video.paused
+          video.src = pick.url
+          video.currentTime = at
+          if (wasPlaying) void video.play().catch(() => {})
+          labelEl.textContent = pick.label
+          wrap
+            .querySelectorAll<HTMLElement>('.quality__item')
+            .forEach((el) => el.setAttribute('aria-checked', String(el === item)))
+          setOpen(false)
+        })
+        document.addEventListener('click', () => setOpen(false))
+        media.appendChild(wrap)
+      }
     } else {
       // placeholder — large animated poster + coming-soon line
       const poster = createPoster(entry, videos.indexOf(entry))
