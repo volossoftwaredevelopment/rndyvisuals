@@ -3,3 +3,11 @@ dist/
 .DS_Store
 *.local
 .vercel
+
+# secrets — never commit credentials
+.env
+.env.*
+!.env.example
+secret.env
+*.pem
+*.key
