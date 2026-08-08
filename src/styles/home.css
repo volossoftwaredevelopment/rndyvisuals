@@ -121,9 +121,36 @@
 
 .work-grid {
   display: grid;
+  /* mobile, and a single film → full width. Column count adapts to how many
+     films there are (data-count set in videoGrid.ts) at wider breakpoints. */
   grid-template-columns: 1fr;
   /* tight — edge to edge, no gaps (reilinjoey) */
   gap: 0;
+}
+
+/* empty slot placeholders when there are no films yet */
+.tile.tile--placeholder {
+  cursor: default;
+}
+
+.tile--placeholder .tile__media {
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+  outline: 1px dashed var(--line-strong);
+  outline-offset: -8px;
+}
+
+.tile--placeholder .tile__media::after {
+  display: none;
+}
+
+.tile__slot {
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-mid);
 }
 
 .tile {
@@ -228,9 +255,17 @@
   }
 }
 
-/* desktop — tight 3 columns */
+/* two films (or 3+) go two-up from tablet; a single film stays full width */
+@media (min-width: 680px) {
+  .work-grid[data-count='2'],
+  .work-grid[data-count='3'] {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* desktop — tight 3 columns once there are 3+ films */
 @media (min-width: 1024px) {
-  .work-grid {
+  .work-grid[data-count='3'] {
     grid-template-columns: repeat(3, 1fr);
   }
 }

@@ -14,6 +14,20 @@ export interface GridOpts {
 export function renderVideoGrid(mount: HTMLElement, videos: VideoEntry[], opts: GridOpts): void {
   const media: HTMLVideoElement[] = []
 
+  // Adapt the grid to how many films there are: 1 → full width, 2 → a row,
+  // 3+ → up to 3 columns (CSS keys off data-count). With none, show a few
+  // "slot" placeholders instead of an empty void.
+  mount.dataset.count = videos.length === 0 ? '3' : String(Math.min(videos.length, 3))
+
+  if (videos.length === 0) {
+    for (let i = 0; i < 3; i += 1) {
+      const ph = document.createElement('div')
+      ph.className = 'tile tile--placeholder'
+      ph.innerHTML = `<div class="tile__media"><span class="tile__slot">Slot ${i + 1}</span></div>`
+      mount.appendChild(ph)
+    }
+  }
+
   videos.forEach((entry, i) => {
     const tile = document.createElement('button')
     tile.type = 'button'
