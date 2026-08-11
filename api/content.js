@@ -15,8 +15,10 @@ export default async function handler(req, res) {
       const rows = await sql`select key, value from content`
       const out = {}
       for (const r of rows) out[r.key] = r.value
-      // short edge cache: fast for visitors, and an admin save shows up quickly
-      res.setHeader('Cache-Control', 'public, s-maxage=15, stale-while-revalidate=300')
+      // Short edge cache, deliberately WITHOUT stale-while-revalidate: SWR would
+      // keep serving the previous copy after a save, so the owner would edit,
+      // reload and still see the old content. 5s is enough to absorb bursts.
+      res.setHeader('Cache-Control', 'public, s-maxage=5')
       return res.status(200).json(out)
     }
 
