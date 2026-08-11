@@ -2,7 +2,10 @@
 
 /* ---------------------------------------------------------------- header */
 
+/* Named so the header is carried across a page swap rather than cross-faded
+   with the content — it visually stays in place while the page changes. */
 .site-header {
+  view-transition-name: site-header;
   position: fixed;
   top: 0;
   left: 0;
@@ -231,6 +234,7 @@
 /* ---------------------------------------------------------------- footer */
 
 .site-footer {
+  view-transition-name: site-footer;
   padding: 0 var(--gutter) 2rem;
   margin-top: clamp(4rem, 10vh, 7rem);
 }

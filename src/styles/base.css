@@ -11,6 +11,31 @@
 html {
   color-scheme: dark;
   -webkit-text-size-adjust: 100%;
+  /* The canvas colour comes from <html>. Leaving it unset let the browser paint
+     a bare canvas for a frame while navigating, which read as a flash. */
+  background: var(--bg);
+}
+
+/* ------------------------------------------------- cross-page transitions
+ * This is a multi-page site, so every link is a real document swap. Without
+ * this the browser hard-cuts between pages, which looks like the layout is
+ * jumping. A short cross-fade makes the swap read as one continuous site, and
+ * the fixed header/footer are named so they stay put instead of fading with
+ * the rest. Browsers without support simply navigate as before.              */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.28s;
+  animation-timing-function: var(--ease-out-quart, ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
 }
 
 /* native smooth anchors — fallback when Lenis is not running */
