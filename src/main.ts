@@ -15,7 +15,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Lenis from 'lenis'
 
 import type { VideoEntry } from './types'
-import { HERO, SPONSORS, SPONSORS_ENABLED, content, contentReady } from './data/content'
+import { HERO, SPONSORS, SPONSORS_ENABLED, content, contentReady, onContentUpdated } from './data/content'
 import { esc } from './lib/esc'
 import { mountShell } from './lib/shell'
 import { initMagnetics } from './modules/magnetic'
@@ -136,13 +136,18 @@ function renderHeroVideo(): void {
 // made deleted films visibly reappear after a deploy, because that snapshot is
 // frozen at build time. The hero markup is static HTML so the page still paints
 // instantly; only the grid/strip wait for the (edge-cached) fetch.
-void contentReady().then(() => {
+function paintContent(): void {
   renderGrid()
   renderSponsors()
   renderHeroText()
   renderHeroVideo()
   ScrollTrigger.refresh()
-})
+}
+
+void contentReady().then(paintContent)
+// each of those four rebuilds its container from empty, so a background refresh
+// can simply run them again
+onContentUpdated(paintContent)
 
 /* ----------------------------------------------- matchMedia contexts */
 

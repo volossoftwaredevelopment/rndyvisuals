@@ -3,7 +3,7 @@
 // One source of truth so all pages stay identical.
 
 import { SITE } from '../site.config'
-import { CONTACTS, PRODUCTS_ENABLED, REVIEWS_ENABLED, contentReady, shellKnown } from '../data/content'
+import { CONTACTS, PRODUCTS_ENABLED, REVIEWS_ENABLED, contentReady, onContentUpdated, shellKnown } from '../data/content'
 import { iconLabel } from './icons'
 import type { IconName } from './icons'
 import { initCart } from './cart'
@@ -306,9 +306,9 @@ export function mountShell(page: PageId, opts: { footer?: boolean } = {}): Shell
   const navEl = header.querySelector<HTMLElement>('.site-nav')
   if (!shellKnown) navEl?.classList.add('is-pending')
 
-  const beforeContacts = JSON.stringify(CONTACTS())
-  const beforeNav = visibleNav().map((n) => n.id).join(',')
-  void contentReady().then(() => {
+  let beforeContacts = JSON.stringify(CONTACTS())
+  let beforeNav = visibleNav().map((n) => n.id).join(',')
+  const syncShell = (): void => {
     navEl?.classList.remove('is-pending')
     if (JSON.stringify(CONTACTS()) !== beforeContacts) refreshFooter(footer)
     // a section switched off in the admin disappears from both navs
@@ -326,7 +326,14 @@ export function mountShell(page: PageId, opts: { footer?: boolean } = {}): Shell
         list.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => setMenu(false)))
       }
     }
-  })
+    // the comparison points move with the DOM, so a later refresh diffs against
+    // what is actually on screen rather than against page-load
+    beforeContacts = JSON.stringify(CONTACTS())
+    beforeNav = visibleNav().map((n) => n.id).join(',')
+  }
+
+  void contentReady().then(syncShell)
+  onContentUpdated(syncShell)
 
   return { header, footer }
 }

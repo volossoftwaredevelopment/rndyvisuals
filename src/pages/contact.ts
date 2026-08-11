@@ -1,4 +1,4 @@
-import { CONTACTS, contentReady } from '../data/content'
+import { CONTACTS, contentReady, onContentUpdated } from '../data/content'
 import { iconLabel } from '../lib/icons'
 import type { IconName } from '../lib/icons'
 import { esc } from '../lib/esc'
@@ -67,7 +67,8 @@ function render(): void {
     .join('')
 }
 
-// render once the live contacts are in
+// render from the local copy at once; redraw if the live check differs
 void contentReady().then(render)
+onContentUpdated(render)
 
 initPage('contact')
