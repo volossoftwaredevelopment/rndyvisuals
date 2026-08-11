@@ -48,7 +48,7 @@ const html = `<!doctype html><html lang="ru"><head><meta charset="utf-8">
 
 <div class="box">
   <div class="lbl">Адрес админки</div>
-  <div class="url">https://rndyvisuals.com/admin.html</div>
+  <div class="url">https://rndyvisuals.com/admin</div>
   <div style="height:4mm"></div>
   <div class="lbl">Пароль</div>
   <div class="val">${esc(password)}</div>
@@ -56,7 +56,7 @@ const html = `<!doctype html><html lang="ru"><head><meta charset="utf-8">
 
 <h2>Как войти</h2>
 <ol>
-  <li>Откройте <span class="url">rndyvisuals.com/admin.html</span> — вас перебросит на страницу входа.</li>
+  <li>Откройте <span class="url">rndyvisuals.com/admin</span> — вас перебросит на страницу входа.</li>
   <li>Введите пароль из рамки выше (можно скопировать из этого PDF).</li>
   <li>Пройдите проверку «Verify you are human» — обычно достаточно одного клика.</li>
   <li>Нажмите «Войти». Сессия живёт 12 часов, потом вход заново.</li>
@@ -83,7 +83,7 @@ const html = `<!doctype html><html lang="ru"><head><meta charset="utf-8">
 <h2>Что где находится</h2>
 <table>
   <tr><td>Сайт</td><td>https://rndyvisuals.com</td></tr>
-  <tr><td>Админка</td><td>https://rndyvisuals.com/admin.html</td></tr>
+  <tr><td>Админка</td><td>https://rndyvisuals.com/admin</td></tr>
   <tr><td>Хостинг</td><td>Vercel (деплой автоматом при коммите в GitHub)</td></tr>
   <tr><td>Домен и DNS</td><td>Cloudflare</td></tr>
   <tr><td>База данных</td><td>Neon PostgreSQL (Франкфурт)</td></tr>

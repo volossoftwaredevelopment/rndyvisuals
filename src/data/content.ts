@@ -83,6 +83,43 @@ const state: SiteContent = {
   settings: { sponsorsEnabled: bundledSite.sponsors?.enabled !== false, productsEnabled: true, reviewsEnabled: true },
 }
 
+/* ------------------------------------------------------------- shell cache
+ * The header nav and footer are structural: rebuilding them after the fetch
+ * makes the whole page jump, and for a moment shows sections that are switched
+ * off. Both depend only on `settings` + `contacts`, which are small and change
+ * rarely — so the last known copy is kept in localStorage and applied before
+ * first paint. Films and the rest still wait for the live fetch.                */
+
+const SHELL_CACHE = 'rndy.shell.v1'
+
+/** True once the shell can be drawn with confidence (cache hit or fetch done). */
+export let shellKnown = false
+
+function readShellCache(): void {
+  try {
+    const raw = localStorage.getItem(SHELL_CACHE)
+    if (!raw) return
+    const cached = JSON.parse(raw) as Partial<Pick<SiteContent, 'settings' | 'contacts'>>
+    if (cached.settings && typeof cached.settings === 'object') {
+      state.settings = { ...state.settings, ...cached.settings }
+    }
+    if (cached.contacts && typeof cached.contacts === 'object') state.contacts = cached.contacts as Contacts
+    shellKnown = true
+  } catch {
+    /* private mode or bad JSON — fall back to waiting for the fetch */
+  }
+}
+
+function writeShellCache(): void {
+  try {
+    localStorage.setItem(SHELL_CACHE, JSON.stringify({ settings: state.settings, contacts: state.contacts }))
+  } catch {
+    /* ignore */
+  }
+}
+
+readShellCache()
+
 export function content(): SiteContent {
   return state
 }
@@ -123,6 +160,8 @@ export async function loadContent(timeoutMs = 2500): Promise<SiteContent> {
         ;(state as unknown as Record<string, unknown>)[key] = value
       }
     }
+    shellKnown = true
+    writeShellCache()
   } catch {
     /* offline / API down / aborted — keep the bundled content */
   }

@@ -3,7 +3,7 @@
 // One source of truth so all pages stay identical.
 
 import { SITE } from '../site.config'
-import { CONTACTS, PRODUCTS_ENABLED, REVIEWS_ENABLED, contentReady } from '../data/content'
+import { CONTACTS, PRODUCTS_ENABLED, REVIEWS_ENABLED, contentReady, shellKnown } from '../data/content'
 import { iconLabel } from './icons'
 import type { IconName } from './icons'
 import { initCart } from './cart'
@@ -299,9 +299,17 @@ export function mountShell(page: PageId, opts: { footer?: boolean } = {}): Shell
   // Contact links come from the database; refresh them once live content lands.
   // The home page drives its own loadContent() — this is a no-op second call
   // there because the result is shared module state.
+  // On the very first visit there is no cached copy yet, so the nav would be a
+  // guess — keep it invisible (its box still reserves the space, so nothing
+  // moves) until the real settings land. On every later visit the cache makes
+  // the first paint correct and this is a no-op.
+  const navEl = header.querySelector<HTMLElement>('.site-nav')
+  if (!shellKnown) navEl?.classList.add('is-pending')
+
   const beforeContacts = JSON.stringify(CONTACTS())
   const beforeNav = visibleNav().map((n) => n.id).join(',')
   void contentReady().then(() => {
+    navEl?.classList.remove('is-pending')
     if (JSON.stringify(CONTACTS()) !== beforeContacts) refreshFooter(footer)
     // a section switched off in the admin disappears from both navs
     if (visibleNav().map((n) => n.id).join(',') !== beforeNav) {

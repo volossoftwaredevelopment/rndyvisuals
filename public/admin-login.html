@@ -116,7 +116,7 @@
           var d = await r.json().catch(function () { return {} })
           if (r.ok && d.ok) {
             say('Done — opening the admin…', 'ok')
-            location.href = '/admin.html'
+            location.href = '/admin'
             return
           }
           say(d.error || 'Could not sign in.', 'err')

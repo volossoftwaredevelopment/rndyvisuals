@@ -46,7 +46,7 @@ export function initAccount(): void {
     } catch {
       /* ignore — redirect regardless */
     }
-    location.href = '/admin-login.html'
+    location.href = '/admin/login'
   })
 
   saveBtn?.addEventListener('click', async () => {
@@ -65,7 +65,7 @@ export function initAccount(): void {
       const d = (await r.json().catch(() => ({}))) as { ok?: boolean; error?: string }
       if (r.ok && d.ok) {
         setMsg(msg, 'Password changed. Taking you to the sign-in page…', 'ok')
-        window.setTimeout(() => (location.href = '/admin-login.html'), 1600)
+        window.setTimeout(() => (location.href = '/admin/login'), 1600)
         return
       }
       setMsg(msg, d.error || 'Could not change the password.', 'error')

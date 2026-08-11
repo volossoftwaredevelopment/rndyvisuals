@@ -792,3 +792,10 @@
     transition: none;
   }
 }
+
+/* Nav whose section toggles are not known yet: reserve the space but do not
+   show links that may be about to disappear (first visit only — later visits
+   paint from the cached settings). */
+.site-nav.is-pending {
+  visibility: hidden;
+}

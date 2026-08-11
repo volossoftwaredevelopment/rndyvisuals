@@ -75,7 +75,7 @@ export default async function middleware(request) {
     return // authenticated — let the request through to the static admin page
   }
 
-  url.pathname = '/admin-login.html'
+  url.pathname = '/admin/login'
   url.search = ''
   return Response.redirect(url, 302)
 }

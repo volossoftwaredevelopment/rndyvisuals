@@ -1,4 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "regions": ["fra1"]
+  "regions": ["fra1"],
+  "rewrites": [
+    { "source": "/admin", "destination": "/admin.html" },
+    { "source": "/admin/login", "destination": "/admin-login.html" }
+  ],
+  "redirects": [
+    { "source": "/admin.html", "destination": "/admin", "permanent": false },
+    { "source": "/admin-login.html", "destination": "/admin/login", "permanent": false }
+  ]
 }
