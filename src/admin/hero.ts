@@ -3,7 +3,7 @@
 // The point of both is orientation: it should be obvious at a glance which film
 // is the full-screen background and which ones sit in the grid below it.
 
-import { get, save } from './store'
+import { get, patch } from './store'
 import { checkFile, uploadToR2 } from './r2upload'
 import { attachGridDnd } from './gridDnd'
 import { createProgress } from './progress'
@@ -66,8 +66,17 @@ export function createHero(
   const mapGrid = $('[data-map-grid]')
 
   let hero: Hero = { brand: '', slogan: '' }
+  let loaded = false
   let library: VideoEntry[] = []
   const progress = msg ? createProgress(msg) : null
+
+  /** Commit a change to the slot: persist first, adopt it only once it stuck. */
+  async function commit(fields: { video: string; poster: string }): Promise<void> {
+    await patch('hero', fields)
+    hero = { ...hero, ...fields }
+    paintSlot()
+    onChange?.()
+  }
 
   // The one button changes its job with the slot: with nothing uploaded there is
   // nothing to "replace", and offering "Delete" against an empty slot is just a
@@ -83,18 +92,32 @@ export function createHero(
         thumb.removeAttribute('src')
       }
     }
-    if (empty) empty.hidden = !!hero.poster
-    if (stateEl) stateEl.textContent = has ? 'Live on the site' : 'Nothing uploaded yet'
+    // A film without a poster is normal (some codecs refuse to render a frame),
+    // so the overlay has to say which of the two is missing.
+    if (empty) {
+      empty.hidden = !!hero.poster
+      empty.textContent = has ? 'No preview image' : 'No video'
+    }
+    if (stateEl) {
+      stateEl.textContent = !loaded ? 'Could not be loaded' : has ? 'Live on the site' : 'Nothing uploaded yet'
+    }
     if (nameEl) {
       nameEl.textContent = has ? fileName(hero.video as string) : ''
       nameEl.hidden = !has
     }
-    if (chooseBtn) chooseBtn.textContent = has ? 'Replace video' : 'Upload video'
-    if (removeBtn) removeBtn.hidden = !has
+    if (chooseBtn) {
+      chooseBtn.textContent = has ? 'Replace video' : 'Upload video'
+      chooseBtn.disabled = !loaded
+    }
+    if (pickBtn) pickBtn.disabled = !loaded
+    if (removeBtn) removeBtn.hidden = !has || !loaded
     if (hint) {
-      hint.textContent = has
-        ? 'Replace swaps the film and keeps everything else. Delete clears the slot — the top of the page then shows the dark background with the wordmark.'
-        : 'With no main video the top of the page is just the dark background with the wordmark — still tidy, simply without the film.'
+      // Never invite an edit on top of a state we could not read.
+      hint.textContent = !loaded
+        ? 'The panel could not read what is in this slot, so changing it now could overwrite something. Reload the page to try again.'
+        : has
+          ? 'Replace swaps the film and keeps everything else. Delete clears the slot — the top of the page then shows the dark background with the wordmark.'
+          : 'With no main video the top of the page is just the dark background with the wordmark — still tidy, simply without the film.'
     }
     if (note) note.textContent = has ? '' : 'Not set'
     if (mapHero) mapHero.style.backgroundImage = hero.poster ? `url("${hero.poster}")` : ''
@@ -190,10 +213,7 @@ export function createHero(
     try {
       // A copy, not a link: the library entry can change or go away afterwards
       // without the front page losing its background.
-      hero = { ...hero, video: url, poster: v.poster || '' }
-      await save('hero', hero)
-      paintSlot()
-      onChange?.()
+      await commit({ video: url, poster: v.poster || '' })
       closePicker()
       setMsg(msg, `“${v.title.trim() || 'That film'}” is now the main video — already live on the site.`, 'ok')
     } catch (err) {
@@ -224,13 +244,11 @@ export function createHero(
       const up = await uploadToR2(file, `home-hero.${file.name.split('.').pop()}`, 'video', (p) =>
         progress?.update(p),
       )
-      hero = { ...hero, video: up.url, poster: posterUrl }
-      await save('hero', hero)
-      paintSlot()
-      onChange?.()
+      await commit({ video: up.url, poster: posterUrl })
       progress?.done()
       setMsg(msg, first ? 'Main video uploaded — already live on the site.' : 'Main video replaced — already live on the site.', 'ok')
     } catch (err) {
+      paintSlot() // redraw from what actually persisted, not from what we hoped
       progress?.done(err instanceof Error ? err.message : 'Upload failed.', 'error')
     } finally {
       if (chooseBtn) chooseBtn.disabled = false
@@ -243,12 +261,10 @@ export function createHero(
     if (!window.confirm('Delete the main video? The top of the page will show the dark background instead.')) return
     if (removeBtn) removeBtn.disabled = true
     try {
-      hero = { ...hero, video: '', poster: '' }
-      await save('hero', hero)
-      paintSlot()
-      onChange?.()
+      await commit({ video: '', poster: '' })
       setMsg(msg, 'Main video deleted — the site is updated.', 'ok')
     } catch (err) {
+      paintSlot() // the film is still live — keep showing it as such
       setMsg(msg, err instanceof Error ? err.message : 'Could not delete the video.', 'error')
     } finally {
       if (removeBtn) removeBtn.disabled = false
@@ -283,10 +299,13 @@ export function createHero(
     async load(): Promise<void> {
       try {
         hero = await get<Hero>('hero', { brand: '', slogan: '' })
+        loaded = true
         paintSlot()
         onChange?.()
       } catch {
-        setMsg(msg, 'Could not load the main video.', 'error')
+        loaded = false
+        paintSlot()
+        setMsg(msg, 'Could not load the main video — reload the page to try again.', 'error')
       }
     },
     paintMap,

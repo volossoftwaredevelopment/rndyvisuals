@@ -41,6 +41,21 @@ export async function save(key: ContentKey, value: unknown): Promise<void> {
   if (cache) cache[key] = value
 }
 
+/**
+ * Save only the given fields of a record, leaving the rest as stored.
+ *
+ * Two panels edit the `hero` row — the wordmark/slogan form and the main-video
+ * slot — and each used to write the whole object back from its own page-load
+ * snapshot. So saving a typo fix in the text form would quietly restore the
+ * video that had just been replaced, or wipe the one just uploaded. Each side
+ * now writes only what it owns, merged onto a fresh read.
+ */
+export async function patch(key: ContentKey, fields: Record<string, unknown>): Promise<void> {
+  await fetchAll(true) // another tab may have written since this page loaded
+  const current = await get<Record<string, unknown>>(key, {})
+  await save(key, { ...current, ...fields })
+}
+
 /** Drop the cached copy (used on logout). */
 export function clearCache(): void {
   cache = null

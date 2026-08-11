@@ -2,7 +2,7 @@
 // and the sponsor-strip toggle. Reads and writes the content API (Neon), so a
 // save is live on the site immediately.
 
-import { get, save } from './store'
+import { get, patch, save } from './store'
 import type { AdminCtx, Panel } from './panel'
 
 interface Hero {
@@ -96,7 +96,9 @@ export function createContactsPanel(ctx: AdminCtx): Panel {
       clean.hero.brand = String(clean.hero.brand ?? '').trim()
       clean.hero.slogan = String(clean.hero.slogan ?? '').trim()
       for (const k of Object.keys(clean.contacts)) clean.contacts[k] = String(clean.contacts[k] ?? '').trim()
-      await save('hero', clean.hero)
+      // Only the two fields this form owns — the same record holds the main
+      // video, and writing it whole would revert whatever panel 1 just did.
+      await patch('hero', { brand: clean.hero.brand, slogan: clean.hero.slogan })
       await save('contacts', clean.contacts)
 
       data = clean
@@ -126,8 +128,11 @@ export function createContactsPanel(ctx: AdminCtx): Panel {
     async load(): Promise<void> {
       setMsg(msg, 'Loading…', 'info')
       try {
+        // Keep only brand/slogan: the stored record also carries the main
+        // video, and it must not ride along in this form's snapshot.
+        const stored = await get<Partial<Hero>>('hero', {})
         data = {
-          hero: await get<Hero>('hero', { brand: '', slogan: '' }),
+          hero: { brand: stored.brand ?? '', slogan: stored.slogan ?? '' },
           contacts: await get<Contacts>('contacts', {}),
         }
         baseline = serialize()
