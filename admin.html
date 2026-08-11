@@ -53,6 +53,18 @@
       </section>
 
       <section id="workspace">
+        <section class="panel panel--switches">
+          <div class="panel-head">
+            <h2 class="panel-title">Sections — what visitors can see</h2>
+          </div>
+          <p class="help">
+            Switch a section off while it has nothing to show. It disappears from the menu straight
+            away and nothing is deleted — flip it back on and the content returns.
+          </p>
+          <div class="switches" id="section-switches"></div>
+          <p class="msg" id="sections-msg" role="status" aria-live="polite" hidden></p>
+        </section>
+
         <nav class="tabs" aria-label="Content sections">
           <button class="tab-btn is-active" type="button" data-tab-btn="videos" aria-selected="true">Videos</button>
           <button class="tab-btn" type="button" data-tab-btn="contacts" aria-selected="false">Text &amp; contacts</button>
@@ -224,25 +236,6 @@
                 </label>
               </fieldset>
 
-              <fieldset class="form-group">
-                <legend>Sections</legend>
-                <p class="help">
-                  Turn a section off while it has nothing to show — its page and its link in the menu
-                  disappear, and the content stays saved for when you switch it back on.
-                </p>
-                <label class="fld fld--check">
-                  <input type="checkbox" data-site="settings.sponsorsEnabled" />
-                  <span class="fld-label">Sponsor strip on the home page</span>
-                </label>
-                <label class="fld fld--check">
-                  <input type="checkbox" data-site="settings.productsEnabled" />
-                  <span class="fld-label">Products page (shop)</span>
-                </label>
-                <label class="fld fld--check">
-                  <input type="checkbox" data-site="settings.reviewsEnabled" />
-                  <span class="fld-label">Kind Words page (testimonials)</span>
-                </label>
-              </fieldset>
             </form>
           </section>
         </div>

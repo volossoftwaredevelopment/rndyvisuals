@@ -10,16 +10,9 @@ interface Hero {
   slogan: string
 }
 type Contacts = Record<string, string>
-interface Settings {
-  sponsorsEnabled: boolean
-  productsEnabled: boolean
-  reviewsEnabled: boolean
-}
-
 interface Model {
   hero: Hero
   contacts: Contacts
-  settings: Settings
 }
 
 function $<T extends HTMLElement = HTMLElement>(sel: string): T {
@@ -103,13 +96,8 @@ export function createContactsPanel(ctx: AdminCtx): Panel {
       clean.hero.brand = String(clean.hero.brand ?? '').trim()
       clean.hero.slogan = String(clean.hero.slogan ?? '').trim()
       for (const k of Object.keys(clean.contacts)) clean.contacts[k] = String(clean.contacts[k] ?? '').trim()
-      clean.settings.sponsorsEnabled = clean.settings.sponsorsEnabled !== false
-      clean.settings.productsEnabled = clean.settings.productsEnabled !== false
-      clean.settings.reviewsEnabled = clean.settings.reviewsEnabled !== false
-
       await save('hero', clean.hero)
       await save('contacts', clean.contacts)
-      await save('settings', clean.settings)
 
       data = clean
       baseline = serialize()
@@ -141,7 +129,6 @@ export function createContactsPanel(ctx: AdminCtx): Panel {
         data = {
           hero: await get<Hero>('hero', { brand: '', slogan: '' }),
           contacts: await get<Contacts>('contacts', {}),
-          settings: await get<Settings>('settings', { sponsorsEnabled: true, productsEnabled: true, reviewsEnabled: true }),
         }
         baseline = serialize()
         loaded = true

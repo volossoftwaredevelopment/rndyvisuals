@@ -1030,6 +1030,120 @@ textarea.field {
   font-size: 0.75rem;
 }
 
+/* --------------------------- section switches --------------------------- */
+
+.panel--switches {
+  margin-top: 28px;
+  padding: 16px 18px;
+  border: 1px solid var(--line-strong, #2c3a45);
+  border-radius: 6px;
+  background: var(--surface, #0d141a);
+}
+
+.switches {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.switch {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 12px 14px;
+  font: inherit;
+  text-align: left;
+  color: var(--ink, #b8c4c6);
+  background: var(--surface-2, #131c24);
+  border: 1px solid var(--line, #1c2730);
+  border-radius: 5px;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    opacity 0.2s;
+}
+
+.switch:hover:not(:disabled) {
+  border-color: var(--line-strong, #2c3a45);
+}
+
+.switch:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.switch:focus-visible {
+  outline: 1px solid var(--accent, #5fc9ba);
+  outline-offset: 2px;
+}
+
+.switch.is-on {
+  border-color: var(--accent-dim, #2e5f58);
+}
+
+/* the sliding track */
+.switch__track {
+  flex: none;
+  width: 42px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--bg, #070b0f);
+  border: 1px solid var(--line-strong, #2c3a45);
+  padding: 2px;
+  display: flex;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.switch.is-on .switch__track {
+  background: var(--accent-dim, #2e5f58);
+  border-color: var(--accent, #5fc9ba);
+}
+
+.switch__knob {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--ink-low, #4e5b60);
+  transition: transform 0.2s var(--ease-out-quart, ease), background 0.2s;
+}
+
+.switch.is-on .switch__knob {
+  transform: translateX(18px);
+  background: var(--accent, #5fc9ba);
+}
+
+.switch__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.switch__title {
+  color: var(--ink-hi, #eaf0ef);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.switch__hint {
+  color: var(--ink-mid, #7c8a8e);
+  font-size: 0.75rem;
+}
+
+.switch__state {
+  flex: none;
+  font-size: var(--fs-micro, 0.6875rem);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--ink-low, #4e5b60);
+}
+
+.switch.is-on .switch__state {
+  color: var(--accent, #5fc9ba);
+}
+
 /* ---------------------------- home-page layout map ---------------------- */
 
 .layout-map {

@@ -16,6 +16,7 @@ import { createProductsPanel } from './products'
 import { initAccount } from './account'
 import { LIMITS, checkFile, formatBytes, uploadToR2 } from './r2upload'
 import { createHero } from './hero'
+import { createSections } from './sections'
 import type { AdminCtx, Panel } from './panel'
 import type { SourceType, VideoEntry } from './types'
 
@@ -57,6 +58,9 @@ const extraPanels: Panel[] = [contactsPanel, sponsorsPanel, productsPanel]
 
 // Main-video slot + the home-page map (shares the poster grabber below).
 const heroSlot = createHero((file) => posterFromVideo(file))
+
+// Always-visible ON/OFF buttons for the sponsor strip, shop and testimonials.
+const sections = createSections()
 
 /* -------------------------------- media ---------------------------------- */
 // Films and their posters upload straight to Cloudflare R2 (see r2upload.ts) and
@@ -366,6 +370,7 @@ async function loadAll(): Promise<void> {
   if (!isDirty()) jobs.push(loadVideos())
   for (const p of extraPanels) if (!p.isDirty()) jobs.push(p.load())
   jobs.push(heroSlot.load())
+  jobs.push(sections.load())
   await Promise.all(jobs)
 }
 
