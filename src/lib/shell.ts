@@ -3,7 +3,7 @@
 // One source of truth so all pages stay identical.
 
 import { SITE } from '../site.config'
-import { CONTACTS, loadContent } from '../data/content'
+import { CONTACTS, PRODUCTS_ENABLED, REVIEWS_ENABLED, contentReady } from '../data/content'
 import { iconLabel } from './icons'
 import { initCart } from './cart'
 import { lockScroll, unlockScroll, trapFocus } from './ui'
@@ -25,6 +25,13 @@ const NAV: NavItem[] = [
   { id: 'about', label: 'About', href: './about.html' },
   { id: 'contact', label: 'Contact', href: './contact.html' },
 ]
+
+/** Nav minus any section switched off in the admin. */
+function visibleNav(): NavItem[] {
+  return NAV.filter(
+    (n) => (n.id !== 'products' || PRODUCTS_ENABLED()) && (n.id !== 'kind-words' || REVIEWS_ENABLED()),
+  )
+}
 
 // two stacked copies of the label — the header hover swap slides them up
 function navLink(item: NavItem, active: boolean): string {
@@ -52,7 +59,7 @@ function buildHeader(page: PageId): HTMLElement {
   header.innerHTML = `
     <a class="site-header__brand" href="./" aria-label="${SITE.brand} — home">RNDY<sup>®</sup></a>
     <nav class="site-nav" aria-label="Primary">
-      ${NAV.map((n) => navLink(n, n.id === page)).join('')}
+      ${visibleNav().map((n) => navLink(n, n.id === page)).join('')}
     </nav>
     <div class="site-header__right">
       ${cart}
@@ -180,7 +187,7 @@ function buildNavMenu(page: PageId): HTMLElement {
   menu.className = 'nav-menu'
   menu.innerHTML = `
     <nav class="nav-menu__list" aria-label="Menu">
-      ${NAV.map(
+      ${visibleNav().map(
         (n) =>
           `<a class="nav-menu__link${n.id === page ? ' is-active' : ''}" href="${n.href}"${n.id === page ? ' aria-current="page"' : ''}>${n.label}</a>`,
       ).join('')}
@@ -269,8 +276,24 @@ export function mountShell(page: PageId, opts: { footer?: boolean } = {}): Shell
   // The home page drives its own loadContent() — this is a no-op second call
   // there because the result is shared module state.
   const beforeContacts = JSON.stringify(CONTACTS())
-  void loadContent().then(() => {
+  const beforeNav = visibleNav().map((n) => n.id).join(',')
+  void contentReady().then(() => {
     if (JSON.stringify(CONTACTS()) !== beforeContacts) refreshFooter(footer)
+    // a section switched off in the admin disappears from both navs
+    if (visibleNav().map((n) => n.id).join(',') !== beforeNav) {
+      const nav = header.querySelector('.site-nav')
+      if (nav) nav.innerHTML = visibleNav().map((n) => navLink(n, n.id === page)).join('')
+      const list = menu.querySelector('.nav-menu__list')
+      if (list) {
+        list.innerHTML = visibleNav()
+          .map(
+            (n) =>
+              `<a class="nav-menu__link${n.id === page ? ' is-active' : ''}" href="${n.href}"${n.id === page ? ' aria-current="page"' : ''}>${n.label}</a>`,
+          )
+          .join('')
+        list.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => setMenu(false)))
+      }
+    }
   })
 
   return { header, footer }

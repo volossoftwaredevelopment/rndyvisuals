@@ -97,8 +97,15 @@
               </span>
               <div class="hero-slot__side">
                 <span class="hero-slot__name" id="hero-name">—</span>
-                <button id="hero-replace" class="btn btn--sm" type="button">Replace main video</button>
+                <span class="hero-slot__btns">
+                  <button id="hero-replace" class="btn btn--sm" type="button">Replace main video</button>
+                  <button id="hero-remove" class="btn btn--ghost btn--sm" type="button">Remove</button>
+                </span>
                 <input id="hero-input" type="file" accept="video/mp4,video/webm,video/quicktime" hidden />
+                <span class="help__note">
+                  With no main video the top of the page is just the dark background with the
+                  wordmark — still tidy, simply without the film.
+                </span>
               </div>
             </div>
             <p class="msg" id="hero-msg" role="status" aria-live="polite" hidden></p>
@@ -218,15 +225,23 @@
               </fieldset>
 
               <fieldset class="form-group">
-                <legend>Sponsor strip</legend>
+                <legend>Sections</legend>
+                <p class="help">
+                  Turn a section off while it has nothing to show — its page and its link in the menu
+                  disappear, and the content stays saved for when you switch it back on.
+                </p>
                 <label class="fld fld--check">
                   <input type="checkbox" data-site="settings.sponsorsEnabled" />
-                  <span class="fld-label">Show the sponsor strip on the home page</span>
+                  <span class="fld-label">Sponsor strip on the home page</span>
                 </label>
-                <p class="help">
-                  With this off the home page shows a slim divider instead of the logo strip. Manage
-                  the logos themselves in the <strong>Sponsors</strong> tab.
-                </p>
+                <label class="fld fld--check">
+                  <input type="checkbox" data-site="settings.productsEnabled" />
+                  <span class="fld-label">Products page (shop)</span>
+                </label>
+                <label class="fld fld--check">
+                  <input type="checkbox" data-site="settings.reviewsEnabled" />
+                  <span class="fld-label">Kind Words page (testimonials)</span>
+                </label>
               </fieldset>
             </form>
           </section>

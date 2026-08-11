@@ -1,4 +1,4 @@
-import { CONTACTS, loadContent } from '../data/content'
+import { CONTACTS, contentReady } from '../data/content'
 import { iconLabel } from '../lib/icons'
 import type { IconName } from '../lib/icons'
 import { initPage } from './page'
@@ -54,12 +54,7 @@ function render(): void {
   }
 }
 
-render()
-
-// refresh once live content arrives (contacts may have been edited in the admin)
-const before = JSON.stringify(CONTACTS())
-void loadContent().then(() => {
-  if (JSON.stringify(CONTACTS()) !== before) render()
-})
+// render once the live contacts are in
+void contentReady().then(render)
 
 initPage('contact')

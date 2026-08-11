@@ -12,6 +12,8 @@ interface Hero {
 type Contacts = Record<string, string>
 interface Settings {
   sponsorsEnabled: boolean
+  productsEnabled: boolean
+  reviewsEnabled: boolean
 }
 
 interface Model {
@@ -102,6 +104,8 @@ export function createContactsPanel(ctx: AdminCtx): Panel {
       clean.hero.slogan = String(clean.hero.slogan ?? '').trim()
       for (const k of Object.keys(clean.contacts)) clean.contacts[k] = String(clean.contacts[k] ?? '').trim()
       clean.settings.sponsorsEnabled = clean.settings.sponsorsEnabled !== false
+      clean.settings.productsEnabled = clean.settings.productsEnabled !== false
+      clean.settings.reviewsEnabled = clean.settings.reviewsEnabled !== false
 
       await save('hero', clean.hero)
       await save('contacts', clean.contacts)
@@ -137,7 +141,7 @@ export function createContactsPanel(ctx: AdminCtx): Panel {
         data = {
           hero: await get<Hero>('hero', { brand: '', slogan: '' }),
           contacts: await get<Contacts>('contacts', {}),
-          settings: await get<Settings>('settings', { sponsorsEnabled: true }),
+          settings: await get<Settings>('settings', { sponsorsEnabled: true, productsEnabled: true, reviewsEnabled: true }),
         }
         baseline = serialize()
         loaded = true

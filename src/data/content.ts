@@ -54,6 +54,10 @@ export interface Product {
 
 export interface Settings {
   sponsorsEnabled: boolean
+  /** Show the Products page + its nav link. */
+  productsEnabled: boolean
+  /** Show the Kind Words (testimonials) page + its nav link. */
+  reviewsEnabled: boolean
 }
 
 export interface SiteContent {
@@ -76,7 +80,7 @@ const state: SiteContent = {
   reviews: bundledReviews,
   hero: bundledSite.hero,
   contacts: bundledSite.contacts,
-  settings: { sponsorsEnabled: bundledSite.sponsors?.enabled !== false },
+  settings: { sponsorsEnabled: bundledSite.sponsors?.enabled !== false, productsEnabled: true, reviewsEnabled: true },
 }
 
 export function content(): SiteContent {
@@ -85,11 +89,25 @@ export function content(): SiteContent {
 
 const isArrayKey = (k: string): boolean => ['videos', 'sponsors', 'products', 'reviews'].includes(k)
 
+let inflight: Promise<SiteContent> | null = null
+
+/**
+ * Live content, fetched once per page and shared by every caller.
+ *
+ * Callers must await this BEFORE their first render. The bundled snapshot above
+ * is a failure fallback only — painting it first and correcting afterwards made
+ * deleted items visibly reappear, because the bundle is frozen at build time.
+ */
+export function contentReady(timeoutMs = 2500): Promise<SiteContent> {
+  inflight ??= loadContent(timeoutMs)
+  return inflight
+}
+
 /**
  * Pull live content from the API. Resolves either way — a failure just leaves
  * the bundled fallback in place, so the site never renders empty.
  */
-export async function loadContent(timeoutMs = 4000): Promise<SiteContent> {
+export async function loadContent(timeoutMs = 2500): Promise<SiteContent> {
   try {
     const ctrl = new AbortController()
     const t = setTimeout(() => ctrl.abort(), timeoutMs)
@@ -117,3 +135,5 @@ export const HERO = (): Hero => state.hero
 export const CONTACTS = (): Contacts => state.contacts
 export const SPONSORS = (): Sponsor[] => state.sponsors
 export const SPONSORS_ENABLED = (): boolean => state.settings.sponsorsEnabled !== false
+export const PRODUCTS_ENABLED = (): boolean => state.settings.productsEnabled !== false
+export const REVIEWS_ENABLED = (): boolean => state.settings.reviewsEnabled !== false

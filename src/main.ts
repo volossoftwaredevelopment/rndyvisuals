@@ -15,7 +15,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Lenis from 'lenis'
 
 import type { VideoEntry } from './types'
-import { HERO, SPONSORS, SPONSORS_ENABLED, content, loadContent } from './data/content'
+import { HERO, SPONSORS, SPONSORS_ENABLED, content, contentReady } from './data/content'
 import { esc } from './lib/esc'
 import { mountShell } from './lib/shell'
 import { initMagnetics } from './modules/magnetic'
@@ -108,27 +108,31 @@ function renderHeroVideo(): void {
   const el = document.querySelector<HTMLVideoElement>('.hero__video')
   if (!el) return
   const { video, poster } = HERO()
+
+  // Removed in the admin → drop the film entirely, leaving the dark backdrop.
+  if (!video) {
+    el.pause()
+    el.removeAttribute('src')
+    el.removeAttribute('poster')
+    el.load()
+    el.hidden = true
+    return
+  }
+
+  el.hidden = false
   if (poster && el.getAttribute('poster') !== poster) el.poster = poster
-  if (video && el.getAttribute('src') !== video) {
+  if (el.getAttribute('src') !== video) {
     el.src = video
     el.load()
     if (!reduced) void el.play().catch(() => {})
   }
 }
 
-// First paint from the bundled snapshot — instant, and correct if the API is down.
-renderGrid()
-renderSponsors()
-renderHeroText()
-renderHeroVideo()
-
-// Then refresh from the database so an admin edit appears without a rebuild.
-// Only re-render the parts that actually changed, so the reveal animations and
-// the hero intro are not restarted needlessly.
-const before = JSON.stringify({ v: content().videos, s: content().sponsors, h: content().hero, g: content().settings })
-void loadContent().then(() => {
-  const after = JSON.stringify({ v: content().videos, s: content().sponsors, h: content().hero, g: content().settings })
-  if (after === before) return
+// Render only once live content has arrived. Painting the bundled snapshot first
+// made deleted films visibly reappear after a deploy, because that snapshot is
+// frozen at build time. The hero markup is static HTML so the page still paints
+// instantly; only the grid/strip wait for the (edge-cached) fetch.
+void contentReady().then(() => {
   renderGrid()
   renderSponsors()
   renderHeroText()

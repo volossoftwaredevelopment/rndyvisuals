@@ -1,16 +1,17 @@
 import '../styles/sections.css'
 import { initPage } from './page'
 import { initReviews } from '../modules/reviews'
-import { content, loadContent } from '../data/content'
+import { REVIEWS_ENABLED, contentReady } from '../data/content'
+import { renderSectionOff } from './section-off'
 
 initPage('kind-words')
 
 const mount = document.querySelector<HTMLElement>('[data-reviews]')
+// Render once the live list is in, so a deleted testimonial never flashes back —
+// and show a friendly notice if the section is switched off in the admin.
 if (mount) {
-  // paint from the bundled snapshot, then re-render if the database differs
-  initReviews(mount)
-  const before = JSON.stringify(content().reviews)
-  void loadContent().then(() => {
-    if (JSON.stringify(content().reviews) !== before) initReviews(mount)
+  void contentReady().then(() => {
+    if (!REVIEWS_ENABLED()) renderSectionOff(mount, 'Kind Words')
+    else initReviews(mount)
   })
 }

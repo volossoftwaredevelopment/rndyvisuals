@@ -39,6 +39,7 @@ export function createHero(posterFor: (file: File) => Promise<{ dataUrl: string 
   const empty = $('#hero-empty')
   const nameEl = $('#hero-name')
   const replaceBtn = $<HTMLButtonElement>('#hero-replace')
+  const removeBtn = $<HTMLButtonElement>('#hero-remove')
   const input = $<HTMLInputElement>('#hero-input')
   const msg = $('#hero-msg')
   const note = $('#hero-note')
@@ -61,9 +62,7 @@ export function createHero(posterFor: (file: File) => Promise<{ dataUrl: string 
     if (empty) empty.hidden = !!hero.poster
     if (nameEl) nameEl.textContent = has ? fileName(hero.video as string) : 'No video yet'
     if (note) note.textContent = has ? '' : 'Not set'
-    if (mapHero) {
-      mapHero.style.backgroundImage = hero.poster ? `url("${hero.poster}")` : ''
-    }
+    if (mapHero) mapHero.style.backgroundImage = hero.poster ? `url("${hero.poster}")` : ''
   }
 
   function paintMap(videos: VideoEntry[]): void {
@@ -119,7 +118,21 @@ export function createHero(posterFor: (file: File) => Promise<{ dataUrl: string 
     }
   }
 
+  async function remove(): Promise<void> {
+    if (!hero.video && !hero.poster) return setMsg(msg, 'There is no main video to remove.', 'info')
+    if (!window.confirm('Remove the main video? The top of the page will show the dark background instead.')) return
+    try {
+      hero = { ...hero, video: '', poster: '' }
+      await save('hero', hero)
+      paintSlot()
+      setMsg(msg, 'Main video removed — the site is updated.', 'ok')
+    } catch (err) {
+      setMsg(msg, err instanceof Error ? err.message : 'Could not remove the video.', 'error')
+    }
+  }
+
   replaceBtn?.addEventListener('click', () => input?.click())
+  removeBtn?.addEventListener('click', () => void remove())
   input?.addEventListener('change', () => {
     const file = input.files?.[0]
     if (file) void replace(file)
