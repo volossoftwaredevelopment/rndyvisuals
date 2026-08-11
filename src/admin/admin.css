@@ -1328,6 +1328,47 @@ textarea.field {
   flex-wrap: wrap;
 }
 
+/* State line: says plainly whether the slot is filled, so the button label
+   underneath ("Upload" vs "Replace") is never a surprise. */
+.hero-slot__state {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: var(--fs-micro, 0.6875rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-mid, #8a999d);
+}
+
+.hero-slot__state::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink-low, #4e5b60);
+  flex: none;
+}
+
+.hero-slot:has(#hero-remove:not([hidden])) .hero-slot__state::before {
+  background: var(--accent, #5fc9ba);
+}
+
+/* Delete is the one destructive control here — it should not look like the
+   neutral ghost buttons it sits next to. */
+.btn--danger {
+  border-color: color-mix(in srgb, #e2564d 45%, transparent);
+  color: #f0a49e;
+}
+
+.btn--danger:hover {
+  border-color: #e2564d;
+  color: #ffbdb7;
+}
+
+.btn--danger::before {
+  background: #e2564d;
+}
+
 .hero-slot__name {
   font-size: 0.8125rem;
   color: var(--ink, #b8c4c6);

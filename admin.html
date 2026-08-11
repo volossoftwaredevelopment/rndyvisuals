@@ -110,13 +110,17 @@
                 <span class="hero-slot__empty" id="hero-empty">No video</span>
               </span>
               <div class="hero-slot__side">
-                <span class="hero-slot__name" id="hero-name">—</span>
+                <span class="hero-slot__state" id="hero-state">Nothing uploaded yet</span>
+                <span class="hero-slot__name" id="hero-name" hidden></span>
                 <span class="hero-slot__btns">
-                  <button id="hero-replace" class="btn btn--sm" type="button">Replace main video</button>
-                  <button id="hero-remove" class="btn btn--ghost btn--sm" type="button">Remove</button>
+                  <button id="hero-choose" class="btn btn--sm" type="button">Upload video</button>
+                  <button id="hero-remove" class="btn btn--ghost btn--sm btn--danger" type="button" hidden>
+                    Delete video
+                  </button>
                 </span>
                 <input id="hero-input" type="file" accept="video/mp4,video/webm,video/quicktime" hidden />
-                <span class="help__note">
+                <span class="help__note" id="hero-limits">MP4 (H.264/H.265), MOV or WebM — up to 2 GB</span>
+                <span class="help__note" id="hero-hint">
                   With no main video the top of the page is just the dark background with the
                   wordmark — still tidy, simply without the film.
                 </span>

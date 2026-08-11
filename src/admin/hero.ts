@@ -45,18 +45,23 @@ export function createHero(
 ): HeroApi {
   const thumb = $<HTMLImageElement>('#hero-thumb')
   const empty = $('#hero-empty')
+  const stateEl = $('#hero-state')
   const nameEl = $('#hero-name')
-  const replaceBtn = $<HTMLButtonElement>('#hero-replace')
+  const chooseBtn = $<HTMLButtonElement>('#hero-choose')
   const removeBtn = $<HTMLButtonElement>('#hero-remove')
   const input = $<HTMLInputElement>('#hero-input')
   const msg = $('#hero-msg')
   const note = $('#hero-note')
+  const hint = $('#hero-hint')
   const mapHero = $('[data-map-hero]')
   const mapGrid = $('[data-map-grid]')
 
   let hero: Hero = { brand: '', slogan: '' }
   const progress = msg ? createProgress(msg) : null
 
+  // The one button changes its job with the slot: with nothing uploaded there is
+  // nothing to "replace", and offering "Delete" against an empty slot is just a
+  // button that can only ever tell you no.
   function paintSlot(): void {
     const has = !!hero.video
     if (thumb) {
@@ -69,7 +74,18 @@ export function createHero(
       }
     }
     if (empty) empty.hidden = !!hero.poster
-    if (nameEl) nameEl.textContent = has ? fileName(hero.video as string) : 'No video yet'
+    if (stateEl) stateEl.textContent = has ? 'Live on the site' : 'Nothing uploaded yet'
+    if (nameEl) {
+      nameEl.textContent = has ? fileName(hero.video as string) : ''
+      nameEl.hidden = !has
+    }
+    if (chooseBtn) chooseBtn.textContent = has ? 'Replace video' : 'Upload video'
+    if (removeBtn) removeBtn.hidden = !has
+    if (hint) {
+      hint.textContent = has
+        ? 'Replace swaps the film and keeps everything else. Delete clears the slot — the top of the page then shows the dark background with the wordmark.'
+        : 'With no main video the top of the page is just the dark background with the wordmark — still tidy, simply without the film.'
+    }
     if (note) note.textContent = has ? '' : 'Not set'
     if (mapHero) mapHero.style.backgroundImage = hero.poster ? `url("${hero.poster}")` : ''
   }
@@ -92,7 +108,9 @@ export function createHero(
   async function replace(file: File): Promise<void> {
     const bad = checkFile(file, 'video')
     if (bad) return setMsg(msg, bad, 'error')
-    if (replaceBtn) replaceBtn.disabled = true
+    const first = !hero.video
+    if (chooseBtn) chooseBtn.disabled = true
+    if (removeBtn) removeBtn.disabled = true
     setMsg(msg, '')
     progress?.start(file.name)
     try {
@@ -114,24 +132,28 @@ export function createHero(
       await save('hero', hero)
       paintSlot()
       progress?.done()
-      setMsg(msg, 'Main video updated — already live on the site.', 'ok')
+      setMsg(msg, first ? 'Main video uploaded — already live on the site.' : 'Main video replaced — already live on the site.', 'ok')
     } catch (err) {
       progress?.done(err instanceof Error ? err.message : 'Upload failed.', 'error')
     } finally {
-      if (replaceBtn) replaceBtn.disabled = false
+      if (chooseBtn) chooseBtn.disabled = false
+      if (removeBtn) removeBtn.disabled = false
     }
   }
 
   async function remove(): Promise<void> {
-    if (!hero.video && !hero.poster) return setMsg(msg, 'There is no main video to remove.', 'info')
-    if (!window.confirm('Remove the main video? The top of the page will show the dark background instead.')) return
+    if (!hero.video && !hero.poster) return setMsg(msg, 'There is no main video to delete.', 'info')
+    if (!window.confirm('Delete the main video? The top of the page will show the dark background instead.')) return
+    if (removeBtn) removeBtn.disabled = true
     try {
       hero = { ...hero, video: '', poster: '' }
       await save('hero', hero)
       paintSlot()
-      setMsg(msg, 'Main video removed — the site is updated.', 'ok')
+      setMsg(msg, 'Main video deleted — the site is updated.', 'ok')
     } catch (err) {
-      setMsg(msg, err instanceof Error ? err.message : 'Could not remove the video.', 'error')
+      setMsg(msg, err instanceof Error ? err.message : 'Could not delete the video.', 'error')
+    } finally {
+      if (removeBtn) removeBtn.disabled = false
     }
   }
 
@@ -143,7 +165,7 @@ export function createHero(
     })
   }
 
-  replaceBtn?.addEventListener('click', () => input?.click())
+  chooseBtn?.addEventListener('click', () => input?.click())
   removeBtn?.addEventListener('click', () => void remove())
   input?.addEventListener('change', () => {
     const file = input.files?.[0]

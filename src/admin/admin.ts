@@ -318,6 +318,9 @@ function buildRow(video: VideoEntry, index: number, total: number): HTMLLIElemen
     thumb.src = src
     thumb.hidden = false
   }
+  // An empty slot has nothing to replace — it is waiting for its first upload.
+  q('[data-act="replace-video-btn"]').textContent =
+    video.source.type === 'placeholder' ? 'Upload video' : 'Replace video'
   q<HTMLButtonElement>('[data-act="up"]').disabled = index === 0
   q<HTMLButtonElement>('[data-act="down"]').disabled = index === total - 1
   return li
