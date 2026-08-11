@@ -1,18 +1,12 @@
-// Products panel — edits src/data/products.json plus the shop images
-// (public/shop/) and downloadable files (public/downloads/). A list of products
-// with a below-list editor; images and the deliverable file upload from the
-// browser and, on publish, commit together with the manifest in ONE commit.
+// Products panel. Images and the downloadable file upload straight to R2 the
+// moment they are picked; the list is saved to the content API, so a change is
+// live on the site immediately.
 
-import { commitFiles, fetchTextFile } from './github'
-import type { CommitFile } from './github'
-import { afterPublish } from './deploy'
+import { get, save } from './store'
+import { checkFile, uploadToR2 } from './r2upload'
 import { esc } from '../lib/esc'
 import type { AdminCtx, Panel } from './panel'
 
-const MANIFEST = 'src/data/products.json'
-const MAX_IMG_BYTES = 8 * 1024 * 1024
-const MAX_DL_BYTES = 50 * 1024 * 1024
-const OK_IMG = /^image\/(png|jpe?g|webp|gif|avif)$/
 
 interface Product {
   id: string
@@ -25,11 +19,6 @@ interface Product {
   images: string[]
   download: string
   downloadName?: string
-}
-
-interface StagedFile {
-  base64: string
-  dataUrl?: string
 }
 
 function $<T extends HTMLElement = HTMLElement>(sel: string): T {
@@ -52,61 +41,6 @@ function slugify(text: string): string {
     .replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
-}
-
-function shortHash(s: string): string {
-  let h = 2166136261 >>> 0
-  const step = Math.max(1, Math.floor(s.length / 4096))
-  for (let i = 0; i < s.length; i += step) {
-    h ^= s.charCodeAt(i)
-    h = Math.imul(h, 16777619) >>> 0
-  }
-  h ^= s.length
-  return (h >>> 0).toString(36)
-}
-
-function bytesToBase64(bytes: Uint8Array): string {
-  let bin = ''
-  const chunk = 0x8000
-  for (let i = 0; i < bytes.length; i += chunk) {
-    bin += String.fromCharCode(...bytes.subarray(i, i + chunk))
-  }
-  return btoa(bin)
-}
-
-function imgExt(file: File): string {
-  const n = file.name.split('.').pop()?.toLowerCase() ?? ''
-  if (['png', 'webp', 'gif', 'avif'].includes(n)) return n
-  if (n === 'jpg' || n === 'jpeg') return 'jpg'
-  if (file.type === 'image/png') return 'png'
-  if (file.type === 'image/webp') return 'webp'
-  if (file.type === 'image/gif') return 'gif'
-  if (file.type === 'image/avif') return 'avif'
-  return 'jpg'
-}
-
-function dlExt(file: File): string {
-  const n = file.name.split('.').pop()?.toLowerCase() ?? ''
-  const clean = n.replace(/[^a-z0-9]/g, '')
-  return clean && clean.length <= 5 ? clean : 'zip'
-}
-
-function readImage(file: File): Promise<StagedFile | null> {
-  return new Promise((resolve) => {
-    const r = new FileReader()
-    r.onload = () => {
-      const dataUrl = String(r.result)
-      const base64 = dataUrl.split(',')[1] ?? ''
-      resolve(base64 ? { base64, dataUrl } : null)
-    }
-    r.onerror = () => resolve(null)
-    r.readAsDataURL(file)
-  })
-}
-
-/** ./shop/x.jpg -> public/shop/x.jpg ; ./downloads/y.zip -> public/downloads/y.zip */
-function toRepoPath(siteUrl: string): string {
-  return `public/${siteUrl.replace(/^\.?\//, '')}`
 }
 
 // Canonical shape so the load baseline and the pre-publish drift check compare
@@ -151,14 +85,13 @@ export function createProductsPanel(ctx: AdminCtx): Panel {
   let baseline = ''
   let loaded = false // guard: a pristine, never-loaded panel must not report dirty
   let list: Product[] = []
-  const staged = new Map<string, StagedFile>()
   let editing: Product | null = null
   let publishing = false
 
   const serialize = (): string => JSON.stringify(list)
   const dirty = (): boolean => loaded && serialize() !== baseline
 
-  const preview = (path: string): string => staged.get(toRepoPath(path))?.dataUrl ?? path
+  const preview = (path: string): string => path
 
   function uniqueId(seed: string): string {
     const base = slugify(seed) || 'product'
@@ -171,9 +104,9 @@ export function createProductsPanel(ctx: AdminCtx): Panel {
 
   function updateUI(): void {
     const isDirty = dirty()
-    publishBtn.textContent = publishing ? 'Publishing…' : isDirty ? 'Publish changes' : 'Published'
+    publishBtn.textContent = publishing ? 'Сохраняю…' : isDirty ? 'Сохранить' : 'Сохранено'
     publishBtn.disabled = publishing || !isDirty || !ctx.valid()
-    note.textContent = isDirty ? 'Unpublished changes' : 'All changes published'
+    note.textContent = isDirty ? 'Есть несохранённые правки' : 'Всё сохранено'
     note.classList.toggle('is-dirty', isDirty)
   }
 
@@ -330,25 +263,19 @@ export function createProductsPanel(ctx: AdminCtx): Panel {
   async function addImages(files: FileList): Promise<void> {
     if (!editing) return
     for (const file of Array.from(files)) {
-      if (!OK_IMG.test(file.type)) {
-        setMsg(editMsg, 'Images must be PNG, JPG, WebP, GIF or AVIF.', 'error')
+      const bad = checkFile(file, 'image')
+      if (bad) {
+        setMsg(editMsg, `«${file.name}»: ${bad}`, 'error')
         continue
       }
-      if (file.size > MAX_IMG_BYTES) {
-        setMsg(editMsg, `“${file.name}” is over 8 MB — use a smaller image.`, 'error')
-        continue
-      }
-      const staged0 = await readImage(file)
-      if (!staged0) {
-        setMsg(editMsg, `Could not read “${file.name}”.`, 'error')
-        continue
-      }
-      const base = slugify(editing.title) || editing.id
-      const tag = shortHash(staged0.base64)
-      const path = `./shop/${base}-${tag}.${imgExt(file)}`
-      if (!editing.images.includes(path)) {
-        staged.set(toRepoPath(path), staged0)
-        editing.images.push(path)
+      setMsg(editMsg, `Загружаю «${file.name}»…`, 'info')
+      try {
+        const base = slugify(editing.title) || editing.id
+        const up = await uploadToR2(file, `${base}.${file.name.split('.').pop()}`, 'image')
+        if (!editing.images.includes(up.url)) editing.images.push(up.url)
+        setMsg(editMsg, '')
+      } catch (err) {
+        setMsg(editMsg, err instanceof Error ? err.message : `Не удалось загрузить «${file.name}».`, 'error')
       }
     }
     renderImages()
@@ -358,49 +285,23 @@ export function createProductsPanel(ctx: AdminCtx): Panel {
 
   async function setDownload(file: File): Promise<void> {
     if (!editing) return
-    if (file.size > MAX_DL_BYTES) {
-      setMsg(editMsg, `That file is ${(file.size / 1024 / 1024).toFixed(0)} MB — keep the demo download under 50 MB.`, 'error')
-      return
-    }
+    const bad = checkFile(file, 'download')
+    if (bad) return setMsg(editMsg, bad, 'error')
+    setMsg(editMsg, `Загружаю «${file.name}»…`, 'info')
     try {
-      const bytes = new Uint8Array(await file.arrayBuffer())
-      const b64 = bytesToBase64(bytes)
       const base = slugify(editing.title) || editing.id
-      const tag = shortHash(b64)
-      // free a previously-staged download for this product (unless shared)
-      freeMedia([editing.download], editing)
-      const path = `./downloads/${base}-${tag}.${dlExt(file)}`
-      staged.set(toRepoPath(path), { base64: b64 })
-      editing.download = path
+      const up = await uploadToR2(file, `${base}.${file.name.split('.').pop()}`, 'download')
+      editing.download = up.url
       editing.downloadName = file.name
       setMsg(editMsg, '')
       renderDownload()
       updateUI()
-    } catch {
-      setMsg(editMsg, 'Could not read that file — try again.', 'error')
+    } catch (err) {
+      setMsg(editMsg, err instanceof Error ? err.message : 'Не удалось загрузить файл.', 'error')
     }
   }
 
   /* ------------------------------- publishing ------------------------------ */
-
-  // Free staged bytes for these site-paths, but only when no OTHER product still
-  // references them (content-hashed names can be shared between products).
-  function freeMedia(urls: Array<string | undefined>, except: Product | null): void {
-    for (const url of urls) {
-      if (!url) continue
-      const stillUsed = list.some((p) => p !== except && (p.images.includes(url) || p.download === url))
-      if (!stillUsed) staged.delete(toRepoPath(url))
-    }
-  }
-
-  function referencedMedia(items: Product[]): Set<string> {
-    const set = new Set<string>()
-    for (const p of items) {
-      for (const img of p.images) set.add(toRepoPath(img))
-      if (p.download) set.add(toRepoPath(p.download))
-    }
-    return set
-  }
 
   async function publish(): Promise<void> {
     if (publishing || !dirty() || !ctx.valid()) return
@@ -408,50 +309,15 @@ export function createProductsPanel(ctx: AdminCtx): Panel {
     updateUI()
     setMsg(msg, '')
     try {
-      // normalise titles in place, then snapshot at click time; edits made while
-      // the commit is in flight stay in `list` and remain publishable.
       list.forEach((p) => (p.title = p.title.trim()))
       const snapshot = structuredClone(list)
-
-      // Drift guard: refuse if products.json changed on GitHub since load.
-      // Normalise the remote the same way the loader does so an omitted optional
-      // field is not mistaken for drift.
-      const remote = await fetchTextFile(ctx.token(), MANIFEST)
-      let remoteProducts: Product[] = []
-      try {
-        remoteProducts = normalizeProducts((JSON.parse(remote.text) as { products?: unknown }).products)
-      } catch {
-        remoteProducts = [{ id: ' drift' } as Product] // force a mismatch below
-      }
-      if (JSON.stringify(remoteProducts) !== baseline) {
-        throw new Error('The products changed on GitHub in another session — reload the page and re-apply your changes.')
-      }
-
-      const files: CommitFile[] = [
-        { path: MANIFEST, content: `${JSON.stringify({ products: snapshot }, null, 2)}\n`, encoding: 'utf-8' },
-      ]
-      const referenced = referencedMedia(snapshot)
-      const committed = new Set<string>()
-      for (const [path, file] of staged) {
-        if (referenced.has(path)) {
-          files.push({ path, content: file.base64, encoding: 'base64' })
-          committed.add(path)
-        }
-      }
-      await commitFiles(ctx.token(), files, 'content: update products via admin')
+      await save('products', snapshot)
       baseline = JSON.stringify(snapshot)
-      // drop committed + orphaned staged media; keep anything staged mid-publish
-      // (still referenced by the live working copy, not yet committed).
-      const live = referencedMedia(list)
-      for (const path of [...staged.keys()]) {
-        if (committed.has(path) || !live.has(path)) staged.delete(path)
-      }
       renderList()
       renderImages()
-      setMsg(msg, 'Published — the site is rebuilding now.', 'ok')
-      afterPublish()
+      setMsg(msg, 'Сохранено — уже на сайте.', 'ok')
     } catch (err) {
-      setMsg(msg, err instanceof Error ? err.message : 'Could not publish — try again.', 'error')
+      setMsg(msg, err instanceof Error ? err.message : 'Не удалось сохранить.', 'error')
     } finally {
       publishing = false
       updateUI()
@@ -476,7 +342,6 @@ export function createProductsPanel(ctx: AdminCtx): Panel {
           editing = null
           editor.hidden = true
         }
-        freeMedia([...p.images, p.download], p)
         list.splice(index, 1)
         renderList()
       }
@@ -530,8 +395,7 @@ export function createProductsPanel(ctx: AdminCtx): Panel {
     const act = btn.dataset.imgAct
     let focusIndex = i
     if (act === 'remove') {
-      const [removed] = editing.images.splice(i, 1)
-      freeMedia([removed], editing)
+      editing.images.splice(i, 1)
       focusIndex = Math.min(i, editing.images.length - 1)
     } else if (act === 'left' && i > 0) {
       ;[editing.images[i - 1], editing.images[i]] = [editing.images[i], editing.images[i - 1]]
@@ -556,7 +420,6 @@ export function createProductsPanel(ctx: AdminCtx): Panel {
 
   downloadEl.addEventListener('click', (e) => {
     if (!(e.target as HTMLElement).closest('[data-download-remove]') || !editing) return
-    freeMedia([editing.download], editing)
     editing.download = ''
     delete editing.downloadName
     renderDownload()
@@ -567,12 +430,9 @@ export function createProductsPanel(ctx: AdminCtx): Panel {
 
   return {
     async load(): Promise<void> {
-      setMsg(msg, 'Loading…', 'info')
+      setMsg(msg, 'Загружаю…', 'info')
       try {
-        const file = await fetchTextFile(ctx.token(), MANIFEST)
-        const parsed = JSON.parse(file.text) as { products?: unknown }
-        list = normalizeProducts(parsed.products)
-        staged.clear()
+        list = normalizeProducts(await get<unknown>('products', []))
         editing = null
         editor.hidden = true
         baseline = serialize()
@@ -580,12 +440,11 @@ export function createProductsPanel(ctx: AdminCtx): Panel {
         setMsg(msg, '')
         renderList()
       } catch (err) {
-        setMsg(msg, err instanceof Error ? err.message : 'Could not load products.', 'error')
+        setMsg(msg, err instanceof Error ? err.message : 'Не удалось загрузить.', 'error')
       }
     },
     reset(): void {
       list = []
-      staged.clear()
       editing = null
       editor.hidden = true
       baseline = ''

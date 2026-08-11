@@ -1,18 +1,23 @@
-// Contacts & Home panel — edits src/data/site.json (hero wordmark/slogan, every
-// contact link, and the sponsor-strip on/off toggle). Form inputs carry a
-// dotted `data-site` path (e.g. "contacts.instagram"); the panel reads/writes
-// the loaded object by that path so adding a field is markup-only.
+// "Home & contacts" panel — edits the hero wordmark/slogan, every contact link
+// and the sponsor-strip toggle. Reads and writes the content API (Neon), so a
+// save is live on the site immediately.
 
-import { fetchTextFile, putTextFile } from './github'
-import { afterPublish } from './deploy'
+import { get, save } from './store'
 import type { AdminCtx, Panel } from './panel'
 
-const PATH = 'src/data/site.json'
+interface Hero {
+  brand: string
+  slogan: string
+}
+type Contacts = Record<string, string>
+interface Settings {
+  sponsorsEnabled: boolean
+}
 
-interface SiteContent {
-  hero: { brand: string; slogan: string }
-  contacts: Record<string, string>
-  sponsors: { enabled: boolean }
+interface Model {
+  hero: Hero
+  contacts: Contacts
+  settings: Settings
 }
 
 function $<T extends HTMLElement = HTMLElement>(sel: string): T {
@@ -53,24 +58,19 @@ export function createContactsPanel(ctx: AdminCtx): Panel {
   const note = $('#contacts-note')
   const inputs = Array.from(form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('[data-site]'))
 
-  let sha = ''
-  let baseline = '' // compact JSON of the last loaded/published content
-  let data: SiteContent | null = null
-  let publishing = false
+  let baseline = ''
+  let loaded = false
+  let data: Model | null = null
+  let saving = false
 
-  function serialize(): string {
-    return JSON.stringify(data)
-  }
-
-  function dirty(): boolean {
-    return data !== null && serialize() !== baseline
-  }
+  const serialize = (): string => JSON.stringify(data)
+  const dirty = (): boolean => loaded && data !== null && serialize() !== baseline
 
   function updateUI(): void {
     const isDirty = dirty()
-    publishBtn.textContent = publishing ? 'Publishing…' : isDirty ? 'Publish changes' : 'Published'
-    publishBtn.disabled = publishing || !isDirty || !ctx.valid()
-    note.textContent = !data ? '' : isDirty ? 'Unpublished changes' : 'All changes published'
+    publishBtn.textContent = saving ? 'Сохраняю…' : isDirty ? 'Сохранить' : 'Сохранено'
+    publishBtn.disabled = saving || !isDirty || !ctx.valid()
+    note.textContent = !loaded ? '' : isDirty ? 'Есть несохранённые правки' : 'Всё сохранено'
     note.classList.toggle('is-dirty', isDirty)
   }
 
@@ -78,47 +78,43 @@ export function createContactsPanel(ctx: AdminCtx): Panel {
     for (const input of inputs) {
       const path = input.dataset.site as string
       const value = getPath(data, path)
-      if (input instanceof HTMLInputElement && input.type === 'checkbox') {
-        input.checked = value !== false
-      } else {
-        input.value = value == null ? '' : String(value)
-      }
+      if (input instanceof HTMLInputElement && input.type === 'checkbox') input.checked = value !== false
+      else input.value = value == null ? '' : String(value)
     }
   }
 
   function readInput(input: HTMLInputElement | HTMLTextAreaElement): void {
     if (!data) return
     const path = input.dataset.site as string
-    if (input instanceof HTMLInputElement && input.type === 'checkbox') {
-      setPath(data as unknown as Record<string, unknown>, path, input.checked)
-    } else {
-      setPath(data as unknown as Record<string, unknown>, path, input.value)
-    }
+    const value = input instanceof HTMLInputElement && input.type === 'checkbox' ? input.checked : input.value
+    setPath(data as unknown as Record<string, unknown>, path, value)
     updateUI()
   }
 
   async function publish(): Promise<void> {
-    if (publishing || !data || !dirty() || !ctx.valid()) return
-    publishing = true
+    if (saving || !data || !dirty() || !ctx.valid()) return
+    saving = true
     updateUI()
     setMsg(msg, '')
     try {
-      // trim text values on the way out (checkbox stays boolean)
-      const clean = JSON.parse(serialize()) as SiteContent
-      clean.hero.brand = clean.hero.brand.trim()
-      clean.hero.slogan = clean.hero.slogan.trim()
-      for (const k of Object.keys(clean.contacts)) clean.contacts[k] = clean.contacts[k].trim()
-      const text = `${JSON.stringify(clean, null, 2)}\n`
-      sha = await putTextFile(ctx.token(), PATH, text, sha, 'content: update site settings via admin')
+      const clean: Model = JSON.parse(serialize())
+      clean.hero.brand = String(clean.hero.brand ?? '').trim()
+      clean.hero.slogan = String(clean.hero.slogan ?? '').trim()
+      for (const k of Object.keys(clean.contacts)) clean.contacts[k] = String(clean.contacts[k] ?? '').trim()
+      clean.settings.sponsorsEnabled = clean.settings.sponsorsEnabled !== false
+
+      await save('hero', clean.hero)
+      await save('contacts', clean.contacts)
+      await save('settings', clean.settings)
+
       data = clean
       baseline = serialize()
       fillForm()
-      setMsg(msg, 'Published — the site is rebuilding now.', 'ok')
-      afterPublish()
+      setMsg(msg, 'Сохранено — уже на сайте.', 'ok')
     } catch (err) {
-      setMsg(msg, err instanceof Error ? err.message : 'Could not publish — try again.', 'error')
+      setMsg(msg, err instanceof Error ? err.message : 'Не удалось сохранить.', 'error')
     } finally {
-      publishing = false
+      saving = false
       updateUI()
     }
   }
@@ -136,23 +132,26 @@ export function createContactsPanel(ctx: AdminCtx): Panel {
 
   return {
     async load(): Promise<void> {
-      setMsg(msg, 'Loading…', 'info')
+      setMsg(msg, 'Загружаю…', 'info')
       try {
-        const file = await fetchTextFile(ctx.token(), PATH)
-        data = JSON.parse(file.text) as SiteContent
-        sha = file.sha
+        data = {
+          hero: await get<Hero>('hero', { brand: '', slogan: '' }),
+          contacts: await get<Contacts>('contacts', {}),
+          settings: await get<Settings>('settings', { sponsorsEnabled: true }),
+        }
         baseline = serialize()
+        loaded = true
         fillForm()
         setMsg(msg, '')
         updateUI()
       } catch (err) {
-        setMsg(msg, err instanceof Error ? err.message : 'Could not load site settings.', 'error')
+        setMsg(msg, err instanceof Error ? err.message : 'Не удалось загрузить.', 'error')
       }
     },
     reset(): void {
       data = null
-      sha = ''
       baseline = ''
+      loaded = false
       for (const input of inputs) {
         if (input instanceof HTMLInputElement && input.type === 'checkbox') input.checked = true
         else input.value = ''

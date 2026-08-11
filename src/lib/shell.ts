@@ -3,7 +3,7 @@
 // One source of truth so all pages stay identical.
 
 import { SITE } from '../site.config'
-import { CONTACTS } from '../data/content'
+import { CONTACTS, loadContent } from '../data/content'
 import { iconLabel } from './icons'
 import { initCart } from './cart'
 import { lockScroll, unlockScroll, trapFocus } from './ui'
@@ -64,12 +64,10 @@ function buildHeader(page: PageId): HTMLElement {
   return header
 }
 
-function buildFooter(): HTMLElement {
-  const footer = document.createElement('footer')
-  footer.className = 'site-footer'
+function footerHTML(): string {
   const ext = 'target="_blank" rel="noopener noreferrer"'
   const nt = '<span class="sr-only"> (opens in a new tab)</span>'
-  footer.innerHTML = `
+  return `
     <span class="rule-line" data-reveal="rule" aria-hidden="true"></span>
     <div class="site-footer__grid">
       <div class="site-footer__col site-footer__brandcol">
@@ -79,17 +77,17 @@ function buildFooter(): HTMLElement {
 
       <nav class="site-footer__col" aria-label="Social">
         <h2 class="site-footer__h micro">Social</h2>
-        <a href="${CONTACTS.instagram}" ${ext}>${iconLabel('instagram', 'Instagram')}${nt}</a>
-        <a href="${CONTACTS.youtube}" ${ext}>${iconLabel('youtube', 'YouTube')}${nt}</a>
-        <a href="${CONTACTS.linkedin}" ${ext}>${iconLabel('linkedin', 'LinkedIn')}${nt}</a>
-        <a href="${CONTACTS.x}" ${ext}>${iconLabel('x', 'X')}${nt}</a>
+        <a href="${CONTACTS().instagram}" ${ext}>${iconLabel('instagram', 'Instagram')}${nt}</a>
+        <a href="${CONTACTS().youtube}" ${ext}>${iconLabel('youtube', 'YouTube')}${nt}</a>
+        <a href="${CONTACTS().linkedin}" ${ext}>${iconLabel('linkedin', 'LinkedIn')}${nt}</a>
+        <a href="${CONTACTS().x}" ${ext}>${iconLabel('x', 'X')}${nt}</a>
       </nav>
 
       <nav class="site-footer__col" aria-label="Contact">
         <h2 class="site-footer__h micro">Contact</h2>
-        <a href="${CONTACTS.whatsapp}" ${ext}>${iconLabel('whatsapp', 'WhatsApp')}${nt}</a>
-        <a href="${CONTACTS.telegram}" ${ext}>${iconLabel('telegram', 'Telegram')}${nt}</a>
-        <a href="mailto:${CONTACTS.email}">${iconLabel('email', 'Email')}</a>
+        <a href="${CONTACTS().whatsapp}" ${ext}>${iconLabel('whatsapp', 'WhatsApp')}${nt}</a>
+        <a href="${CONTACTS().telegram}" ${ext}>${iconLabel('telegram', 'Telegram')}${nt}</a>
+        <a href="mailto:${CONTACTS().email}">${iconLabel('email', 'Email')}</a>
       </nav>
 
       <div class="site-footer__col">
@@ -101,7 +99,19 @@ function buildFooter(): HTMLElement {
       </div>
     </div>
   `
+}
+
+function buildFooter(): HTMLElement {
+  const footer = document.createElement('footer')
+  footer.className = 'site-footer'
+  footer.innerHTML = footerHTML()
   return footer
+}
+
+/** Re-render the footer after live content arrives (contact links may differ). */
+export function refreshFooter(footer: HTMLElement): void {
+  footer.innerHTML = footerHTML()
+  wireBackToTop(footer)
 }
 
 function buildCookie(): HTMLElement {
@@ -254,6 +264,14 @@ export function mountShell(page: PageId, opts: { footer?: boolean } = {}): Shell
   document.body.appendChild(grain)
 
   if (page === 'products') initCart()
+
+  // Contact links come from the database; refresh them once live content lands.
+  // The home page drives its own loadContent() — this is a no-op second call
+  // there because the result is shared module state.
+  const beforeContacts = JSON.stringify(CONTACTS())
+  void loadContent().then(() => {
+    if (JSON.stringify(CONTACTS()) !== beforeContacts) refreshFooter(footer)
+  })
 
   return { header, footer }
 }

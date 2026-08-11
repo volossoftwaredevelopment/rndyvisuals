@@ -1,9 +1,7 @@
 // Shared services the admin shell hands to each content panel.
 
 export interface AdminCtx {
-  /** The current GitHub token (empty until a valid one is saved). */
-  token(): string
-  /** Whether the saved token has been validated for write access. */
+  /** True once the panel may write (the session is already verified server-side). */
   valid(): boolean
 }
 

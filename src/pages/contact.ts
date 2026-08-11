@@ -1,11 +1,14 @@
-import { CONTACTS } from '../data/content'
+import { CONTACTS, loadContent } from '../data/content'
 import { iconLabel } from '../lib/icons'
 import type { IconName } from '../lib/icons'
 import { initPage } from './page'
 
-// render the contact + social buttons from the editable manifest
+// render the contact + social buttons from the live content store
 const mount = document.querySelector<HTMLElement>('[data-contact]')
-if (mount) {
+
+function render(): void {
+  if (!mount) return
+  {
   const nt = '<span class="sr-only"> (opens in a new tab)</span>'
   interface Item {
     icon: IconName
@@ -17,18 +20,18 @@ if (mount) {
     {
       h: 'Contact',
       items: [
-        { icon: 'whatsapp', label: `WhatsApp ${CONTACTS.whatsappLabel}`, href: CONTACTS.whatsapp, ext: true },
-        { icon: 'telegram', label: 'Telegram', href: CONTACTS.telegram, ext: true },
-        { icon: 'email', label: CONTACTS.email, href: `mailto:${CONTACTS.email}`, ext: false },
+        { icon: 'whatsapp', label: `WhatsApp ${CONTACTS().whatsappLabel}`, href: CONTACTS().whatsapp, ext: true },
+        { icon: 'telegram', label: 'Telegram', href: CONTACTS().telegram, ext: true },
+        { icon: 'email', label: CONTACTS().email, href: `mailto:${CONTACTS().email}`, ext: false },
       ],
     },
     {
       h: 'Social',
       items: [
-        { icon: 'instagram', label: 'Instagram', href: CONTACTS.instagram, ext: true },
-        { icon: 'youtube', label: 'YouTube', href: CONTACTS.youtube, ext: true },
-        { icon: 'linkedin', label: 'LinkedIn', href: CONTACTS.linkedin, ext: true },
-        { icon: 'x', label: 'X', href: CONTACTS.x, ext: true },
+        { icon: 'instagram', label: 'Instagram', href: CONTACTS().instagram, ext: true },
+        { icon: 'youtube', label: 'YouTube', href: CONTACTS().youtube, ext: true },
+        { icon: 'linkedin', label: 'LinkedIn', href: CONTACTS().linkedin, ext: true },
+        { icon: 'x', label: 'X', href: CONTACTS().x, ext: true },
       ],
     },
   ]
@@ -48,6 +51,15 @@ if (mount) {
       </div>`,
     )
     .join('')
+  }
 }
+
+render()
+
+// refresh once live content arrives (contacts may have been edited in the admin)
+const before = JSON.stringify(CONTACTS())
+void loadContent().then(() => {
+  if (JSON.stringify(CONTACTS()) !== before) render()
+})
 
 initPage('contact')

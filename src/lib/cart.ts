@@ -1,7 +1,7 @@
 // Cart — localStorage state + header badge + slide-in drawer + "added" toast.
 // Static site: no checkout, the drawer's checkout button is disabled.
 
-import { PRODUCTS } from '../data/products'
+import { products } from '../data/products'
 import type { Product } from '../data/products'
 import { esc } from './esc'
 import { lockScroll, unlockScroll, trapFocus } from './ui'
@@ -33,7 +33,7 @@ function persist(): void {
   listeners.forEach((f) => f())
 }
 function product(id: string): Product | undefined {
-  return PRODUCTS.find((p) => p.id === id)
+  return products().find((p) => p.id === id)
 }
 const money = (n: number): string => `€${n}`
 

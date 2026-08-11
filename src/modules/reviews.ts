@@ -1,14 +1,14 @@
 // Client reviews — a single large rotating testimonial with star rating,
 // dot navigation and gentle auto-advance (paused on hover/focus).
 
-import { REVIEWS } from '../data/reviews'
+import { content } from '../data/content'
 
 function starsMarkup(n: number): string {
   return Array.from({ length: 5 }, (_, i) => `<span class="star${i < n ? ' is-on' : ''}">★</span>`).join('')
 }
 
 export function initReviews(mount: HTMLElement): void {
-  if (!REVIEWS.length) return
+  if (!content().reviews.length) return
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
   mount.innerHTML = `
@@ -37,7 +37,7 @@ export function initReviews(mount: HTMLElement): void {
   const dotsEl = mount.querySelector<HTMLElement>('[data-dots]')!
   const liveEl = mount.querySelector<HTMLElement>('[data-live]')!
 
-  dotsEl.innerHTML = REVIEWS.map(
+  dotsEl.innerHTML = content().reviews.map(
     (_, i) => `<button type="button" class="reviews__dot" data-i="${i}" aria-label="Testimonial ${i + 1}"></button>`,
   ).join('')
   const dots = Array.from(dotsEl.querySelectorAll<HTMLButtonElement>('.reviews__dot'))
@@ -46,7 +46,7 @@ export function initReviews(mount: HTMLElement): void {
   let timer = 0
 
   const paint = (): void => {
-    const r = REVIEWS[index]
+    const r = content().reviews[index]
     if (!r) return
     starsEl.innerHTML = starsMarkup(r.rating)
     ratingEl.textContent = `Rated ${r.rating} out of 5.`
@@ -63,12 +63,12 @@ export function initReviews(mount: HTMLElement): void {
   // Announce only user-initiated changes (not the 6s auto-advance) so a screen
   // reader is never interrupted by unsolicited testimonial churn.
   const announce = (): void => {
-    const r = REVIEWS[index]
-    if (r) liveEl.textContent = `Testimonial ${index + 1} of ${REVIEWS.length}. Rated ${r.rating} of 5. “${r.quote}” — ${r.name}, ${r.role}.`
+    const r = content().reviews[index]
+    if (r) liveEl.textContent = `Testimonial ${index + 1} of ${content().reviews.length}. Rated ${r.rating} of 5. “${r.quote}” — ${r.name}, ${r.role}.`
   }
 
   const go = (n: number, byUser = false): void => {
-    const next = (n + REVIEWS.length) % REVIEWS.length
+    const next = (n + content().reviews.length) % content().reviews.length
     if (next === index) return
     const commit = (): void => {
       index = next

@@ -2,7 +2,7 @@
 // down) with a "View all" catalog toggle, plus a detail modal (description +
 // pricing + add to cart). Cover art is a generated gradient (no image files).
 
-import { PRODUCTS } from '../data/products'
+import { products } from '../data/products'
 import type { Product } from '../data/products'
 import { add as addToCart } from '../lib/cart'
 import { esc } from '../lib/esc'
@@ -126,13 +126,13 @@ export function initShop(mount: HTMLElement): void {
     <div class="pcar" data-carousel>
       <button type="button" class="pcar__nav pcar__prev" data-prev aria-label="Previous product">←</button>
       <div class="pcar__stage" data-stage>
-        ${PRODUCTS.map((p, i) => cardHTML(p, i)).join('')}
+        ${products().map((p, i) => cardHTML(p, i)).join('')}
       </div>
       <button type="button" class="pcar__nav pcar__next" data-next aria-label="Next product">→</button>
       <div class="pcar__dots" data-dots role="tablist" aria-label="Products"></div>
     </div>
     <div class="shop__grid" data-grid hidden>
-      ${PRODUCTS.map((p, i) => cardHTML(p, i)).join('')}
+      ${products().map((p, i) => cardHTML(p, i)).join('')}
     </div>`
 
   const stage = mount.querySelector<HTMLElement>('[data-stage]')!
@@ -144,7 +144,7 @@ export function initShop(mount: HTMLElement): void {
   const grid = mount.querySelector<HTMLElement>('[data-grid]')!
   const toggle = mount.querySelector<HTMLButtonElement>('[data-toggle]')!
 
-  dotsEl.innerHTML = PRODUCTS.map(
+  dotsEl.innerHTML = products().map(
     (_, i) => `<button type="button" class="pcar__dot" data-i="${i}" role="tab" aria-label="Product ${i + 1}"></button>`,
   ).join('')
   const dots = Array.from(dotsEl.querySelectorAll<HTMLButtonElement>('.pcar__dot'))
@@ -195,7 +195,7 @@ export function initShop(mount: HTMLElement): void {
   let lastFocus: HTMLElement | null = null
 
   const openModal = (id: string): void => {
-    const p = PRODUCTS.find((x) => x.id === id)
+    const p = products().find((x) => x.id === id)
     if (!p) return
     lastFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
     const q = <T extends Element>(sel: string): T => modal.querySelector<T>(sel)!

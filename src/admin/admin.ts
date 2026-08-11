@@ -1,16 +1,13 @@
-// RNDY — ADMIN. Static content manager for the site's editable manifests.
-// Tabbed shell: Videos (src/data/videos.json), Contacts & Home (src/data/site.json),
-// Sponsors (src/data/sponsors.json). One GitHub token drives every panel; each
-// commits to `main`, and the shared deploy pill follows the resulting build.
+// RNDY — ADMIN. Content manager for the site.
+// Tabs: Videos, Contacts & Home, Sponsors, Products. Everything is read from and
+// written to the content API (Neon) — the page is already behind the password
+// gate, so there is no token to paste and a save is live immediately.
 import '@fontsource-variable/archivo/standard.css'
 import '@fontsource-variable/space-grotesk'
 import '../styles/tokens.css'
 import './admin.css'
 
-import { SITE } from '../site.config'
-import { commitFiles, fetchManifest, fetchTextFile, validateToken } from './github'
-import type { CommitFile } from './github'
-import { afterPublish, initDeploy, refreshDeploy, resetDeploy } from './deploy'
+import { get, save } from './store'
 import { fetchOEmbedTitle, parseVideoUrl } from './oembed'
 import { attachListDnd } from './dnd'
 import { createContactsPanel } from './contacts'
@@ -21,8 +18,6 @@ import { LIMITS, checkFile, formatBytes, uploadToR2 } from './r2upload'
 import type { AdminCtx, Panel } from './panel'
 import type { SourceType, VideoEntry } from './types'
 
-const TOKEN_KEY = 'rndy.admin.token'
-
 function $<T extends HTMLElement = HTMLElement>(sel: string): T {
   const node = document.querySelector<T>(sel)
   if (!node) throw new Error(`admin: missing element ${sel}`)
@@ -30,12 +25,6 @@ function $<T extends HTMLElement = HTMLElement>(sel: string): T {
 }
 
 const ui = {
-  tokenDot: $('#token-dot'),
-  tokenInput: $<HTMLInputElement>('#token-input'),
-  tokenSave: $<HTMLButtonElement>('#token-save'),
-  tokenForget: $<HTMLButtonElement>('#token-forget'),
-  tokenMsg: $('#token-msg'),
-  helpRepo: $('#help-repo'),
   workspace: $('#workspace'),
   videosNote: $('#videos-note'),
   videosMsg: $('#videos-msg'),
@@ -49,22 +38,16 @@ const ui = {
   addMsg: $('#add-msg'),
   publishBtn: $<HTMLButtonElement>('#publish-btn'),
   publishMsg: $('#publish-msg'),
-  deployPill: $('#deploy-pill'),
-  deployRefresh: $<HTMLButtonElement>('#deploy-refresh'),
 }
 
 const state = {
-  token: '',
-  tokenValid: false,
-  baseline: [] as VideoEntry[], // last loaded/published manifest — diff target
+  baseline: [] as VideoEntry[], // last loaded/saved list — diff target
   videos: [] as VideoEntry[], // working copy bound to the UI
   publishing: false,
 }
 
-const ctx: AdminCtx = {
-  token: () => state.token,
-  valid: () => state.tokenValid,
-}
+// The edge middleware already verified the session before serving this page.
+const ctx: AdminCtx = { valid: () => true }
 
 const contactsPanel = createContactsPanel(ctx)
 const sponsorsPanel = createSponsorsPanel(ctx)
@@ -262,7 +245,7 @@ function updatePublishUI(): void {
     : changes > 0
       ? `Publish ${changes} change${changes === 1 ? '' : 's'}`
       : 'Publish'
-  ui.publishBtn.disabled = state.publishing || changes === 0 || !state.tokenValid
+  ui.publishBtn.disabled = state.publishing || changes === 0 || !true
   ui.videosNote.textContent = changes > 0 ? 'Unpublished changes' : 'All changes published'
   ui.videosNote.classList.toggle('is-dirty', changes > 0)
 }
@@ -371,29 +354,6 @@ function focusRowTitle(id: string): void {
 
 /* ----------------------------- token + loading ------------------------------ */
 
-async function validateAndLoad(token: string): Promise<void> {
-  setBusy(ui.tokenSave, true)
-  setMsg(ui.tokenMsg, 'Checking token…', 'info')
-  try {
-    await validateToken(token)
-    state.token = token
-    state.tokenValid = true
-    localStorage.setItem(TOKEN_KEY, token)
-    ui.tokenDot.classList.add('is-valid')
-    ui.tokenForget.hidden = false
-    ui.workspace.hidden = false
-    setMsg(ui.tokenMsg, 'Token works — this browser can publish changes.', 'ok')
-    await loadAll()
-  } catch (err) {
-    state.tokenValid = false
-    ui.tokenDot.classList.remove('is-valid')
-    setMsg(ui.tokenMsg, errText(err), 'error')
-  } finally {
-    setBusy(ui.tokenSave, false)
-    updatePublishUI()
-  }
-}
-
 // Load every panel that has no unpublished edits — re-saving a token (e.g. after
 // a 401 mid-session) must not wipe in-progress changes in any panel.
 async function loadAll(): Promise<void> {
@@ -401,16 +361,15 @@ async function loadAll(): Promise<void> {
   if (!isDirty()) jobs.push(loadVideos())
   for (const p of extraPanels) if (!p.isDirty()) jobs.push(p.load())
   await Promise.all(jobs)
-  void refreshDeploy()
 }
 
 async function loadVideos(): Promise<void> {
   ui.videosRetry.hidden = true
-  setMsg(ui.videosMsg, 'Loading videos…', 'info')
+  setMsg(ui.videosMsg, 'Загружаю…', 'info')
   try {
-    const { manifest } = await fetchManifest(state.token)
-    state.baseline = manifest.videos
-    state.videos = structuredClone(manifest.videos)
+    const list = await get<VideoEntry[]>('videos', [])
+    state.baseline = structuredClone(list)
+    state.videos = structuredClone(list)
     setMsg(ui.videosMsg, '')
     renderRows()
     updatePublishUI()
@@ -418,21 +377,6 @@ async function loadVideos(): Promise<void> {
     setMsg(ui.videosMsg, errText(err), 'error')
     ui.videosRetry.hidden = false
   }
-}
-
-function forgetToken(): void {
-  localStorage.removeItem(TOKEN_KEY)
-  state.token = ''
-  state.tokenValid = false
-  state.baseline = []
-  state.videos = []
-  ui.tokenInput.value = ''
-  ui.tokenDot.classList.remove('is-valid')
-  ui.tokenForget.hidden = true
-  ui.workspace.hidden = true
-  extraPanels.forEach((p) => p.reset())
-  resetDeploy()
-  setMsg(ui.tokenMsg, 'Token removed from this browser.', 'info')
 }
 
 /* ---------------------------------- adding ---------------------------------- */
@@ -559,40 +503,17 @@ async function replaceVideo(id: string, file: File, statusEl: HTMLElement | null
 /* --------------------------------- publishing -------------------------------- */
 
 async function publish(): Promise<void> {
-  if (state.publishing || !state.tokenValid || !isDirty()) return
+  if (state.publishing || !isDirty()) return
   state.publishing = true
   updatePublishUI()
   setMsg(ui.publishMsg, '')
   try {
-    // Snapshot at click time: edits made while the request is in flight must
-    // stay dirty rather than being absorbed into the baseline unpublished.
+    // Snapshot at click time: edits made while the request is in flight stay
+    // dirty rather than being absorbed into the baseline unsaved.
     const videos = structuredClone(state.videos)
-
-    // Drift guard: refuse if videos.json changed on GitHub since we loaded it,
-    // so a concurrent publish (another tab/device) is not silently reverted.
-    const remote = await fetchTextFile(state.token, SITE.manifestRepoPath)
-    let remoteVideos: unknown = null
-    try {
-      remoteVideos = (JSON.parse(remote.text) as { videos?: unknown }).videos
-    } catch {
-      /* unparseable remote — treat as drift below */
-    }
-    if (JSON.stringify(remoteVideos) !== JSON.stringify(state.baseline)) {
-      throw new Error('The videos changed on GitHub in another session — reload the page and re-apply your changes.')
-    }
-
-    // Films and posters already live on R2 — only the manifest is committed.
-    const files: CommitFile[] = [
-      {
-        path: SITE.manifestRepoPath,
-        content: `${JSON.stringify({ videos }, null, 2)}\n`,
-        encoding: 'utf-8',
-      },
-    ]
-    await commitFiles(state.token, files, 'content: update videos via admin')
+    await save('videos', videos)
     state.baseline = videos
-    setMsg(ui.publishMsg, 'Published — the site is rebuilding now.', 'ok')
-    afterPublish()
+    setMsg(ui.publishMsg, 'Сохранено — уже на сайте.', 'ok')
   } catch (err) {
     setMsg(ui.publishMsg, errText(err), 'error')
   } finally {
@@ -628,21 +549,6 @@ function initTabs(): void {
 /* ----------------------------------- wiring ---------------------------------- */
 
 function bindEvents(): void {
-  ui.tokenSave.addEventListener('click', () => {
-    const token = ui.tokenInput.value.trim()
-    if (!token) {
-      setMsg(ui.tokenMsg, 'Paste a token first.', 'error')
-      return
-    }
-    void validateAndLoad(token)
-  })
-  ui.tokenInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      ui.tokenSave.click()
-    }
-  })
-  ui.tokenForget.addEventListener('click', forgetToken)
   ui.videosRetry.addEventListener('click', () => {
     void loadVideos()
   })
@@ -736,22 +642,12 @@ function bindEvents(): void {
 }
 
 function init(): void {
-  ui.helpRepo.textContent = `${SITE.owner}/${SITE.repo}`
   paintLimits()
   initAccount()
   initTabs()
-  initDeploy({
-    pill: ui.deployPill,
-    refreshBtn: ui.deployRefresh,
-    getToken: () => state.token,
-    isValid: () => state.tokenValid,
-  })
   bindEvents()
-  const saved = localStorage.getItem(TOKEN_KEY)
-  if (saved) {
-    ui.tokenInput.value = saved
-    void validateAndLoad(saved)
-  }
+  // The page is only served to an authenticated session, so load immediately.
+  void loadAll()
 }
 
 init()
