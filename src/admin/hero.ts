@@ -6,6 +6,7 @@
 import { get, save } from './store'
 import { checkFile, uploadToR2 } from './r2upload'
 import { attachGridDnd } from './gridDnd'
+import { createProgress } from './progress'
 import type { VideoEntry } from './types'
 
 interface Hero {
@@ -54,6 +55,7 @@ export function createHero(
   const mapGrid = $('[data-map-grid]')
 
   let hero: Hero = { brand: '', slogan: '' }
+  const progress = msg ? createProgress(msg) : null
 
   function paintSlot(): void {
     const has = !!hero.video
@@ -91,7 +93,8 @@ export function createHero(
     const bad = checkFile(file, 'video')
     if (bad) return setMsg(msg, bad, 'error')
     if (replaceBtn) replaceBtn.disabled = true
-    setMsg(msg, `Uploading “${file.name}” — 0%`, 'info')
+    setMsg(msg, '')
+    progress?.start(file.name)
     try {
       // poster first so the slot updates as soon as possible
       let posterUrl = hero.poster ?? ''
@@ -104,15 +107,16 @@ export function createHero(
           /* optional */
         }
       }
-      const up = await uploadToR2(file, `home-hero.${file.name.split('.').pop()}`, 'video', (f) =>
-        setMsg(msg, `Uploading “${file.name}” — ${Math.round(f * 100)}%`, 'info'),
+      const up = await uploadToR2(file, `home-hero.${file.name.split('.').pop()}`, 'video', (p) =>
+        progress?.update(p),
       )
       hero = { ...hero, video: up.url, poster: posterUrl }
       await save('hero', hero)
       paintSlot()
+      progress?.done()
       setMsg(msg, 'Main video updated — already live on the site.', 'ok')
     } catch (err) {
-      setMsg(msg, err instanceof Error ? err.message : 'Upload failed.', 'error')
+      progress?.done(err instanceof Error ? err.message : 'Upload failed.', 'error')
     } finally {
       if (replaceBtn) replaceBtn.disabled = false
     }

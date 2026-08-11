@@ -1417,3 +1417,77 @@ textarea.field {
     order: 1;
   }
 }
+
+/* ---------------------------- upload progress --------------------------- */
+
+.uprog {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line-strong, #2c3a45);
+  border-radius: 5px;
+  background: var(--surface, #0d141a);
+}
+
+.uprog__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.uprog__name {
+  color: var(--ink-hi, #eaf0ef);
+  font-size: 0.8125rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.uprog__pct {
+  flex: none;
+  color: var(--accent, #5fc9ba);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.uprog__track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-2, #131c24);
+  overflow: hidden;
+}
+
+.uprog__fill {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: var(--accent, #5fc9ba);
+  transition: width 0.25s var(--ease-out-quart, ease);
+}
+
+.uprog__stats {
+  margin-top: 7px;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-mid, #7c8a8e);
+}
+
+.uprog.is-done .uprog__fill {
+  background: var(--accent, #5fc9ba);
+}
+
+.uprog.is-error .uprog__fill {
+  background: var(--admin-danger);
+}
+
+.uprog.is-error .uprog__pct {
+  color: var(--admin-danger);
+}
+
+.uprog.is-error .uprog__stats {
+  color: var(--admin-danger);
+}

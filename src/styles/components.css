@@ -1163,3 +1163,52 @@
   border-top: 1px solid var(--line);
   color: var(--ink);
 }
+
+/* ------------------------------------------------- quiet loading hint
+ * Only shown when a load runs long (see src/lib/loading.ts) — a thin line at
+ * the very top that travels, so a slow connection reads as "working" rather
+ * than "broken". Deliberately minimal: no spinner, no overlay, no blocking. */
+
+.loadbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 999;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s var(--ease-out-quart);
+}
+
+.loadbar.is-on {
+  opacity: 1;
+}
+
+.loadbar__fill {
+  display: block;
+  height: 100%;
+  width: 34%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  transform: translateX(-40%);
+  animation: loadbar-sweep 1.15s var(--ease-inout-circ, ease-in-out) infinite;
+}
+
+@keyframes loadbar-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(340%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loadbar__fill {
+    animation: none;
+    width: 100%;
+    transform: none;
+    opacity: 0.5;
+  }
+}

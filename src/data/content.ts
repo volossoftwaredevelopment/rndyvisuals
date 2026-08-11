@@ -12,6 +12,7 @@ import productsJson from './products.json'
 import { REVIEWS as bundledReviews } from './reviews'
 import type { Review } from './reviews'
 import type { VideoEntry } from '../types'
+import { withLoading } from '../lib/loading'
 
 export interface Contacts {
   instagram: string
@@ -136,7 +137,7 @@ let inflight: Promise<SiteContent> | null = null
  * deleted items visibly reappear, because the bundle is frozen at build time.
  */
 export function contentReady(timeoutMs = 2500): Promise<SiteContent> {
-  inflight ??= loadContent(timeoutMs)
+  inflight ??= withLoading(loadContent(timeoutMs))
   return inflight
 }
 

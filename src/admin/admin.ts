@@ -15,6 +15,8 @@ import { createSponsorsPanel } from './sponsors'
 import { createProductsPanel } from './products'
 import { initAccount } from './account'
 import { LIMITS, checkFile, formatBytes, uploadToR2 } from './r2upload'
+import type { UploadProgress } from './r2upload'
+import { createProgress } from './progress'
 import { createHero } from './hero'
 import { createSections } from './sections'
 import type { AdminCtx, Panel } from './panel'
@@ -65,6 +67,9 @@ const heroSlot = createHero(
 
 // Always-visible ON/OFF buttons for the sponsor strip, shop and testimonials.
 const sections = createSections()
+
+// Shared progress bar for library uploads, parked under the add controls.
+const uploadProgress = createProgress(ui.addMsg)
 
 /* -------------------------------- media ---------------------------------- */
 // Films and their posters upload straight to Cloudflare R2 (see r2upload.ts) and
@@ -155,7 +160,7 @@ function posterFromVideo(file: File): Promise<{ base64: string; dataUrl: string 
 async function stageVideo(
   file: File,
   seed: string,
-  onProgress?: (fraction: number) => void,
+  onProgress?: (p: UploadProgress) => void,
 ): Promise<{ url: string; poster: string } | string> {
   const bad = checkFile(file, 'video')
   if (bad) return bad
@@ -447,15 +452,15 @@ async function addFromFile(file: File): Promise<void> {
 
   const title = titleFromFilename(file.name)
   setBusy(ui.addFile, true)
-  setMsg(ui.addMsg, `Uploading «${file.name}» (${formatBytes(file.size)}) — 0%`, 'info')
-  const staged = await stageVideo(file, title || 'film', (f) =>
-    setMsg(ui.addMsg, `Uploading «${file.name}» — ${Math.round(f * 100)}%`, 'info'),
-  )
+  setMsg(ui.addMsg, '')
+  uploadProgress.start(file.name)
+  const staged = await stageVideo(file, title || 'film', (p) => uploadProgress.update(p))
   setBusy(ui.addFile, false)
   if (typeof staged === 'string') {
-    setMsg(ui.addMsg, staged, 'error')
+    uploadProgress.done(staged, 'error')
     return
   }
+  uploadProgress.done()
   setMsg(
     ui.addMsg,
     staged.poster
@@ -495,15 +500,18 @@ async function replaceVideo(id: string, file: File, statusEl: HTMLElement | null
   const show = (t: string): void => {
     if (statusEl) statusEl.textContent = t
   }
-  show('Uploading 0%')
-  const staged = await stageVideo(file, found.title || found.id, (f) =>
-    show(`Uploading ${Math.round(f * 100)}%`),
-  )
+  show('Uploading…')
+  uploadProgress.start(file.name)
+  const staged = await stageVideo(file, found.title || found.id, (p) => {
+    uploadProgress.update(p)
+    show(`${Math.round(p.fraction * 100)}%`)
+  })
   if (typeof staged === 'string') {
-    setMsg(ui.addMsg, staged, 'error')
+    uploadProgress.done(staged, 'error')
     show('')
     return
   }
+  uploadProgress.done()
   found.source = { type: 'file', url: staged.url }
   found.poster = staged.poster
   renderRows()

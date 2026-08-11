@@ -53,12 +53,38 @@ export interface UploadResult {
   key: string
 }
 
+/** What the caller needs to draw a real progress read-out. */
+export interface UploadProgress {
+  loaded: number
+  total: number
+  /** 0..1 */
+  fraction: number
+  bytesPerSecond: number
+  /** null until there is enough data to estimate */
+  secondsLeft: number | null
+}
+
+/** "2 min 30 s", "45 s" — short and readable. */
+export function formatDuration(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds < 0) return '—'
+  const s = Math.round(seconds)
+  if (s < 60) return `${s} s`
+  const m = Math.floor(s / 60)
+  const rest = s % 60
+  if (m < 60) return rest ? `${m} min ${rest} s` : `${m} min`
+  const h = Math.floor(m / 60)
+  return `${h} h ${m % 60} min`
+}
+
+export const formatSpeed = (bps: number): string =>
+  bps >= 1024 * 1024 ? `${(bps / 1024 / 1024).toFixed(1)} MB/s` : `${Math.max(1, Math.round(bps / 1024))} KB/s`
+
 /** Upload with progress. Rejects with a human-readable message. */
 export function uploadToR2(
   file: File | Blob,
   filename: string,
   kind: UploadKind,
-  onProgress?: (fraction: number) => void,
+  onProgress?: (p: UploadProgress) => void,
 ): Promise<UploadResult> {
   return new Promise((resolve, reject) => {
     fetch('/api/upload-url', {
@@ -84,12 +110,37 @@ export function uploadToR2(
         const xhr = new XMLHttpRequest()
         xhr.open('PUT', d.uploadUrl, true)
         xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream')
+
+        // Smooth the rate over recent samples — a raw instantaneous figure makes
+        // the estimate jump around too much to be useful.
+        const started = performance.now()
+        let lastAt = started
+        let lastLoaded = 0
+        let rate = 0
         xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable && onProgress) onProgress(e.loaded / e.total)
+          if (!e.lengthComputable || !onProgress) return
+          const now = performance.now()
+          const dt = (now - lastAt) / 1000
+          if (dt > 0.2) {
+            const instant = (e.loaded - lastLoaded) / dt
+            rate = rate ? rate * 0.7 + instant * 0.3 : instant
+            lastAt = now
+            lastLoaded = e.loaded
+          }
+          const elapsed = (now - started) / 1000
+          const average = elapsed > 0 ? e.loaded / elapsed : 0
+          const bps = rate || average
+          onProgress({
+            loaded: e.loaded,
+            total: e.total,
+            fraction: e.loaded / e.total,
+            bytesPerSecond: bps,
+            secondsLeft: bps > 0 && elapsed > 1 ? (e.total - e.loaded) / bps : null,
+          })
         }
         xhr.onload = () => {
           if (xhr.status >= 200 && xhr.status < 300) {
-            onProgress?.(1)
+            onProgress?.({ loaded: file.size, total: file.size, fraction: 1, bytesPerSecond: 0, secondsLeft: 0 })
             resolve({ url: d.publicUrl as string, key: d.key as string })
           } else {
             reject(new Error(`Storage rejected the file (code ${xhr.status}).`))
