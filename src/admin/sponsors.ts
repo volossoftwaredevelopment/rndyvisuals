@@ -67,9 +67,9 @@ export function createSponsorsPanel(ctx: AdminCtx): Panel {
 
   function updateUI(): void {
     const isDirty = dirty()
-    publishBtn.textContent = publishing ? 'Сохраняю…' : isDirty ? 'Сохранить' : 'Сохранено'
+    publishBtn.textContent = publishing ? 'Saving…' : isDirty ? 'Save' : 'Saved'
     publishBtn.disabled = publishing || !isDirty || !ctx.valid()
-    note.textContent = isDirty ? 'Есть несохранённые правки' : 'Всё сохранено'
+    note.textContent = isDirty ? 'Unsaved changes' : 'All changes saved'
     note.classList.toggle('is-dirty', isDirty)
   }
 
@@ -113,13 +113,13 @@ export function createSponsorsPanel(ctx: AdminCtx): Panel {
   async function addSponsor(): Promise<void> {
     const name = nameInput.value.trim()
     const file = fileInput.files?.[0]
-    if (!name) return setMsg(addMsg, 'Сначала введите название спонсора.', 'error')
-    if (!file) return setMsg(addMsg, 'Выберите файл логотипа.', 'error')
+    if (!name) return setMsg(addMsg, 'Enter the sponsor name first.', 'error')
+    if (!file) return setMsg(addMsg, 'Choose a logo file.', 'error')
     const bad = checkFile(file, 'image')
     if (bad) return setMsg(addMsg, bad, 'error')
 
     addBtn.disabled = true
-    setMsg(addMsg, 'Загружаю логотип…', 'info')
+    setMsg(addMsg, 'Uploading the logo…', 'info')
     try {
       const up = await uploadToR2(file, `${slugify(name) || 'sponsor'}.${file.name.split('.').pop()}`, 'image')
       list.push({ id: uniqueId(name), name, logo: up.url })
@@ -128,7 +128,7 @@ export function createSponsorsPanel(ctx: AdminCtx): Panel {
       setMsg(addMsg, '')
       render()
     } catch (err) {
-      setMsg(addMsg, err instanceof Error ? err.message : 'Не удалось загрузить логотип.', 'error')
+      setMsg(addMsg, err instanceof Error ? err.message : 'Could not upload the logo.', 'error')
     } finally {
       addBtn.disabled = false
     }
@@ -138,14 +138,14 @@ export function createSponsorsPanel(ctx: AdminCtx): Panel {
     const bad = checkFile(file, 'image')
     if (bad) return setMsg(msg, bad, 'error')
     const sponsor = list[index]
-    setMsg(msg, 'Загружаю логотип…', 'info')
+    setMsg(msg, 'Uploading the logo…', 'info')
     try {
       const up = await uploadToR2(file, `${slugify(sponsor.name) || sponsor.id}.${file.name.split('.').pop()}`, 'image')
       sponsor.logo = up.url
       setMsg(msg, '')
       render()
     } catch (err) {
-      setMsg(msg, err instanceof Error ? err.message : 'Не удалось загрузить логотип.', 'error')
+      setMsg(msg, err instanceof Error ? err.message : 'Could not upload the logo.', 'error')
     }
   }
 
@@ -166,9 +166,9 @@ export function createSponsorsPanel(ctx: AdminCtx): Panel {
       await save('sponsors', snapshot)
       baseline = JSON.stringify(snapshot)
       render()
-      setMsg(msg, 'Сохранено — уже на сайте.', 'ok')
+      setMsg(msg, 'Saved — already live on the site.', 'ok')
     } catch (err) {
-      setMsg(msg, err instanceof Error ? err.message : 'Не удалось сохранить.', 'error')
+      setMsg(msg, err instanceof Error ? err.message : 'Could not save.', 'error')
     } finally {
       publishing = false
       updateUI()
@@ -226,7 +226,7 @@ export function createSponsorsPanel(ctx: AdminCtx): Panel {
 
   return {
     async load(): Promise<void> {
-      setMsg(msg, 'Загружаю…', 'info')
+      setMsg(msg, 'Loading…', 'info')
       try {
         list = await get<Sponsor[]>('sponsors', [])
         baseline = serialize()
@@ -234,7 +234,7 @@ export function createSponsorsPanel(ctx: AdminCtx): Panel {
         setMsg(msg, '')
         render()
       } catch (err) {
-        setMsg(msg, err instanceof Error ? err.message : 'Не удалось загрузить.', 'error')
+        setMsg(msg, err instanceof Error ? err.message : 'Could not load.', 'error')
       }
     },
     reset(): void {

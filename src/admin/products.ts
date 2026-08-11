@@ -104,9 +104,9 @@ export function createProductsPanel(ctx: AdminCtx): Panel {
 
   function updateUI(): void {
     const isDirty = dirty()
-    publishBtn.textContent = publishing ? 'Сохраняю…' : isDirty ? 'Сохранить' : 'Сохранено'
+    publishBtn.textContent = publishing ? 'Saving…' : isDirty ? 'Save' : 'Saved'
     publishBtn.disabled = publishing || !isDirty || !ctx.valid()
-    note.textContent = isDirty ? 'Есть несохранённые правки' : 'Всё сохранено'
+    note.textContent = isDirty ? 'Unsaved changes' : 'All changes saved'
     note.classList.toggle('is-dirty', isDirty)
   }
 
@@ -268,14 +268,14 @@ export function createProductsPanel(ctx: AdminCtx): Panel {
         setMsg(editMsg, `«${file.name}»: ${bad}`, 'error')
         continue
       }
-      setMsg(editMsg, `Загружаю «${file.name}»…`, 'info')
+      setMsg(editMsg, `Uploading “${file.name}”…`, 'info')
       try {
         const base = slugify(editing.title) || editing.id
         const up = await uploadToR2(file, `${base}.${file.name.split('.').pop()}`, 'image')
         if (!editing.images.includes(up.url)) editing.images.push(up.url)
         setMsg(editMsg, '')
       } catch (err) {
-        setMsg(editMsg, err instanceof Error ? err.message : `Не удалось загрузить «${file.name}».`, 'error')
+        setMsg(editMsg, err instanceof Error ? err.message : `Could not upload “${file.name}”.`, 'error')
       }
     }
     renderImages()
@@ -287,7 +287,7 @@ export function createProductsPanel(ctx: AdminCtx): Panel {
     if (!editing) return
     const bad = checkFile(file, 'download')
     if (bad) return setMsg(editMsg, bad, 'error')
-    setMsg(editMsg, `Загружаю «${file.name}»…`, 'info')
+    setMsg(editMsg, `Uploading “${file.name}”…`, 'info')
     try {
       const base = slugify(editing.title) || editing.id
       const up = await uploadToR2(file, `${base}.${file.name.split('.').pop()}`, 'download')
@@ -297,7 +297,7 @@ export function createProductsPanel(ctx: AdminCtx): Panel {
       renderDownload()
       updateUI()
     } catch (err) {
-      setMsg(editMsg, err instanceof Error ? err.message : 'Не удалось загрузить файл.', 'error')
+      setMsg(editMsg, err instanceof Error ? err.message : 'Could not upload the file.', 'error')
     }
   }
 
@@ -315,9 +315,9 @@ export function createProductsPanel(ctx: AdminCtx): Panel {
       baseline = JSON.stringify(snapshot)
       renderList()
       renderImages()
-      setMsg(msg, 'Сохранено — уже на сайте.', 'ok')
+      setMsg(msg, 'Saved — already live on the site.', 'ok')
     } catch (err) {
-      setMsg(msg, err instanceof Error ? err.message : 'Не удалось сохранить.', 'error')
+      setMsg(msg, err instanceof Error ? err.message : 'Could not save.', 'error')
     } finally {
       publishing = false
       updateUI()
@@ -430,7 +430,7 @@ export function createProductsPanel(ctx: AdminCtx): Panel {
 
   return {
     async load(): Promise<void> {
-      setMsg(msg, 'Загружаю…', 'info')
+      setMsg(msg, 'Loading…', 'info')
       try {
         list = normalizeProducts(await get<unknown>('products', []))
         editing = null
@@ -440,7 +440,7 @@ export function createProductsPanel(ctx: AdminCtx): Panel {
         setMsg(msg, '')
         renderList()
       } catch (err) {
-        setMsg(msg, err instanceof Error ? err.message : 'Не удалось загрузить.', 'error')
+        setMsg(msg, err instanceof Error ? err.message : 'Could not load.', 'error')
       }
     },
     reset(): void {

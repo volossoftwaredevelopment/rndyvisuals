@@ -15,6 +15,7 @@ import { createSponsorsPanel } from './sponsors'
 import { createProductsPanel } from './products'
 import { initAccount } from './account'
 import { LIMITS, checkFile, formatBytes, uploadToR2 } from './r2upload'
+import { createHero } from './hero'
 import type { AdminCtx, Panel } from './panel'
 import type { SourceType, VideoEntry } from './types'
 
@@ -53,6 +54,9 @@ const contactsPanel = createContactsPanel(ctx)
 const sponsorsPanel = createSponsorsPanel(ctx)
 const productsPanel = createProductsPanel(ctx)
 const extraPanels: Panel[] = [contactsPanel, sponsorsPanel, productsPanel]
+
+// Main-video slot + the home-page map (shares the poster grabber below).
+const heroSlot = createHero((file) => posterFromVideo(file))
 
 /* -------------------------------- media ---------------------------------- */
 // Films and their posters upload straight to Cloudflare R2 (see r2upload.ts) and
@@ -167,7 +171,7 @@ async function stageVideo(
     const up = await uploadToR2(file, `${base}.${ext}`, 'video', onProgress)
     return { url: up.url, poster: posterUrl }
   } catch (err) {
-    return err instanceof Error ? err.message : 'Не удалось загрузить файл.'
+    return err instanceof Error ? err.message : 'Could not upload the file.'
   }
 }
 
@@ -307,6 +311,7 @@ function buildRow(video: VideoEntry, index: number, total: number): HTMLLIElemen
 }
 
 function renderRows(): void {
+  heroSlot.paintMap(state.videos)
   ui.rows.textContent = ''
   if (state.videos.length === 0) {
     const empty = document.createElement('li')
@@ -360,12 +365,13 @@ async function loadAll(): Promise<void> {
   const jobs: Promise<void>[] = []
   if (!isDirty()) jobs.push(loadVideos())
   for (const p of extraPanels) if (!p.isDirty()) jobs.push(p.load())
+  jobs.push(heroSlot.load())
   await Promise.all(jobs)
 }
 
 async function loadVideos(): Promise<void> {
   ui.videosRetry.hidden = true
-  setMsg(ui.videosMsg, 'Загружаю…', 'info')
+  setMsg(ui.videosMsg, 'Loading…', 'info')
   try {
     const list = await get<VideoEntry[]>('videos', [])
     state.baseline = structuredClone(list)
@@ -432,9 +438,9 @@ async function addFromFile(file: File): Promise<void> {
 
   const title = titleFromFilename(file.name)
   setBusy(ui.addFile, true)
-  setMsg(ui.addMsg, `Загрузка «${file.name}» (${formatBytes(file.size)}) — 0%`, 'info')
+  setMsg(ui.addMsg, `Uploading «${file.name}» (${formatBytes(file.size)}) — 0%`, 'info')
   const staged = await stageVideo(file, title || 'film', (f) =>
-    setMsg(ui.addMsg, `Загрузка «${file.name}» — ${Math.round(f * 100)}%`, 'info'),
+    setMsg(ui.addMsg, `Uploading «${file.name}» — ${Math.round(f * 100)}%`, 'info'),
   )
   setBusy(ui.addFile, false)
   if (typeof staged === 'string') {
@@ -444,8 +450,8 @@ async function addFromFile(file: File): Promise<void> {
   setMsg(
     ui.addMsg,
     staged.poster
-      ? 'Видео загружено ✓ Не забудьте нажать «Publish».'
-      : 'Видео загружено ✓ Постер создать не удалось — плитка будет пустой до воспроизведения.',
+      ? 'Video uploaded ✓ Remember to press Save.'
+      : 'Video uploaded ✓ No poster could be made, so the tile stays blank until it plays.',
     'ok',
   )
   appendEntry({
@@ -480,9 +486,9 @@ async function replaceVideo(id: string, file: File, statusEl: HTMLElement | null
   const show = (t: string): void => {
     if (statusEl) statusEl.textContent = t
   }
-  show('Загрузка 0%')
+  show('Uploading 0%')
   const staged = await stageVideo(file, found.title || found.id, (f) =>
-    show(`Загрузка ${Math.round(f * 100)}%`),
+    show(`Uploading ${Math.round(f * 100)}%`),
   )
   if (typeof staged === 'string') {
     setMsg(ui.addMsg, staged, 'error')
@@ -496,7 +502,7 @@ async function replaceVideo(id: string, file: File, statusEl: HTMLElement | null
   // renderRows() recreates the status node; set it next frame so the live region announces
   requestAnimationFrame(() => {
     const s = ui.rows.querySelector<HTMLElement>(`.row[data-id="${id}"] [data-status]`)
-    if (s) s.textContent = staged.poster ? 'Загружено ✓' : 'Загружено ✓ (без постера)'
+    if (s) s.textContent = staged.poster ? 'Uploaded ✓' : 'Uploaded ✓ (no poster)'
   })
 }
 
@@ -513,7 +519,7 @@ async function publish(): Promise<void> {
     const videos = structuredClone(state.videos)
     await save('videos', videos)
     state.baseline = videos
-    setMsg(ui.publishMsg, 'Сохранено — уже на сайте.', 'ok')
+    setMsg(ui.publishMsg, 'Saved — already live on the site.', 'ok')
   } catch (err) {
     setMsg(ui.publishMsg, errText(err), 'error')
   } finally {
@@ -565,7 +571,7 @@ function bindEvents(): void {
       btn.closest('.row-media')?.querySelector<HTMLInputElement>('input[data-act="replace-video"]')?.click()
     } else if (act === 'delete') {
       const name = video.title.trim() || video.id
-      if (window.confirm(`Удалить «${name}»? Пропадёт с сайта после публикации.`)) {
+      if (window.confirm(`Delete “${name}”? It disappears from the site once you save.`)) {
         // the file itself stays in R2 — removing it here only drops the entry
         state.videos.splice(index, 1)
         renderRows()

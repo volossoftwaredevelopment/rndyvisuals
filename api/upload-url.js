@@ -12,19 +12,19 @@ export const LIMITS = {
     maxBytes: 2 * 1024 * 1024 * 1024, // 2 GB
     types: ['video/mp4', 'video/quicktime', 'video/webm'],
     exts: ['mp4', 'mov', 'webm'],
-    label: 'MP4 (H.264/H.265), MOV или WebM, до 2 ГБ',
+    label: 'MP4 (H.264/H.265), MOV or WebM, up to 2 GB',
   },
   image: {
     maxBytes: 15 * 1024 * 1024, // 15 MB
     types: ['image/jpeg', 'image/png', 'image/webp', 'image/avif'],
     exts: ['jpg', 'jpeg', 'png', 'webp', 'avif'],
-    label: 'JPG, PNG, WebP или AVIF, до 15 МБ',
+    label: 'JPG, PNG, WebP or AVIF, up to 15 MB',
   },
   download: {
     maxBytes: 500 * 1024 * 1024, // 500 MB
     types: [],
     exts: [],
-    label: 'любой файл, до 500 МБ',
+    label: 'any file, up to 500 MB',
   },
 }
 
@@ -44,28 +44,28 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'POST')
     return res.status(405).json({ error: 'Method not allowed' })
   }
-  if (!requireSession(req)) return res.status(401).json({ error: 'Сессия истекла — войдите заново.' })
+  if (!requireSession(req)) return res.status(401).json({ error: 'Your session expired — please sign in again.' })
 
   try {
     const { filename, contentType, size, kind = 'video' } = await readJson(req)
     const rule = LIMITS[kind]
-    if (!rule) return res.status(400).json({ error: 'Неизвестный тип загрузки.' })
+    if (!rule) return res.status(400).json({ error: 'Unknown upload type.' })
 
     const ext = String(filename || '').split('.').pop()?.toLowerCase() || ''
     if (rule.exts.length && !rule.exts.includes(ext)) {
-      return res.status(400).json({ error: `Неподходящий формат «.${ext}». Допустимо: ${rule.label}.` })
+      return res.status(400).json({ error: `Unsupported format “.${ext}”. Allowed: ${rule.label}.` })
     }
     if (rule.types.length && contentType && !rule.types.includes(contentType)) {
-      return res.status(400).json({ error: `Неподходящий тип файла. Допустимо: ${rule.label}.` })
+      return res.status(400).json({ error: `Unsupported file type. Allowed: ${rule.label}.` })
     }
     const bytes = Number(size)
     if (!Number.isFinite(bytes) || bytes <= 0) {
-      return res.status(400).json({ error: 'Не удалось определить размер файла.' })
+      return res.status(400).json({ error: 'Could not read the file size.' })
     }
     if (bytes > rule.maxBytes) {
       const mb = (bytes / 1024 / 1024).toFixed(0)
       const capMb = (rule.maxBytes / 1024 / 1024).toFixed(0)
-      return res.status(413).json({ error: `Файл ${mb} МБ — больше лимита ${capMb} МБ. Допустимо: ${rule.label}.` })
+      return res.status(413).json({ error: `That file is ${mb} MB — over the ${capMb} MB limit. Allowed: ${rule.label}.` })
     }
 
     const base = slug(String(filename || '').replace(/\.[^.]+$/, ''))
@@ -94,6 +94,6 @@ export default async function handler(req, res) {
     await logEvent('upload_signed', `${clientIp(req)} ${key}`)
     return res.status(200).json({ uploadUrl, key, publicUrl: `${PUBLIC_BASE}/${key}` })
   } catch {
-    return res.status(500).json({ error: 'Не удалось подготовить загрузку. Попробуйте ещё раз.' })
+    return res.status(500).json({ error: 'Could not start the upload. Please try again.' })
   }
 }

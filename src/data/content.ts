@@ -27,6 +27,9 @@ export interface Contacts {
 export interface Hero {
   brand: string
   slogan: string
+  /** Background film on the home page (the first thing a visitor sees). */
+  video?: string
+  poster?: string
 }
 
 export interface Sponsor {

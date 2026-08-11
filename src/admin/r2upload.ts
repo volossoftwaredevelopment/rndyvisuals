@@ -15,36 +15,36 @@ export const LIMITS: Record<UploadKind, UploadLimit> = {
   video: {
     maxBytes: 2 * 1024 * 1024 * 1024,
     exts: ['mp4', 'mov', 'webm'],
-    label: 'MP4 (H.264/H.265), MOV или WebM — до 2 ГБ',
+    label: 'MP4 (H.264/H.265), MOV or WebM — up to 2 GB',
   },
   image: {
     maxBytes: 15 * 1024 * 1024,
     exts: ['jpg', 'jpeg', 'png', 'webp', 'avif'],
-    label: 'JPG, PNG, WebP или AVIF — до 15 МБ',
+    label: 'JPG, PNG, WebP or AVIF — up to 15 MB',
   },
   download: {
     maxBytes: 500 * 1024 * 1024,
     exts: [],
-    label: 'любой файл — до 500 МБ',
+    label: 'any file — up to 500 MB',
   },
 }
 
 export const formatBytes = (n: number): string =>
   n >= 1024 * 1024 * 1024
-    ? `${(n / 1024 / 1024 / 1024).toFixed(2)} ГБ`
-    : `${Math.max(1, Math.round(n / 1024 / 1024))} МБ`
+    ? `${(n / 1024 / 1024 / 1024).toFixed(2)} GB`
+    : `${Math.max(1, Math.round(n / 1024 / 1024))} MB`
 
 /** Client-side pre-check so the user hears about a bad file instantly. */
 export function checkFile(file: File, kind: UploadKind): string | null {
   const rule = LIMITS[kind]
   const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
   if (rule.exts.length && !rule.exts.includes(ext)) {
-    return `Формат «.${ext}» не подходит. Нужно: ${rule.label}.`
+    return `Format “.${ext}” is not supported. Allowed: ${rule.label}.`
   }
   if (file.size > rule.maxBytes) {
-    return `Файл ${formatBytes(file.size)} — это больше лимита. Нужно: ${rule.label}.`
+    return `That file is ${formatBytes(file.size)} — that is over the limit. Allowed: ${rule.label}.`
   }
-  if (file.size === 0) return 'Файл пустой.'
+  if (file.size === 0) return 'The file is empty.'
   return null
 }
 
@@ -79,7 +79,7 @@ export function uploadToR2(
           error?: string
         }
         if (!r.ok || !d.uploadUrl) {
-          throw new Error(d.error || (r.status === 401 ? 'Сессия истекла — войдите заново.' : 'Не удалось начать загрузку.'))
+          throw new Error(d.error || (r.status === 401 ? 'Your session expired — please sign in again.' : 'Could not start the upload.'))
         }
         const xhr = new XMLHttpRequest()
         xhr.open('PUT', d.uploadUrl, true)
@@ -92,13 +92,13 @@ export function uploadToR2(
             onProgress?.(1)
             resolve({ url: d.publicUrl as string, key: d.key as string })
           } else {
-            reject(new Error(`Хранилище отклонило файл (код ${xhr.status}).`))
+            reject(new Error(`Storage rejected the file (code ${xhr.status}).`))
           }
         }
-        xhr.onerror = () => reject(new Error('Сеть оборвалась во время загрузки.'))
-        xhr.onabort = () => reject(new Error('Загрузка отменена.'))
+        xhr.onerror = () => reject(new Error('The connection dropped during the upload.'))
+        xhr.onabort = () => reject(new Error('Upload cancelled.'))
         xhr.send(file)
       })
-      .catch((e) => reject(e instanceof Error ? e : new Error('Не удалось загрузить файл.')))
+      .catch((e) => reject(e instanceof Error ? e : new Error('Could not upload the file.')))
   })
 }

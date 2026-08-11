@@ -51,11 +51,11 @@ export function initAccount(): void {
 
   saveBtn?.addEventListener('click', async () => {
     if (!current || !next || !repeat) return
-    if (next.value !== repeat.value) return setMsg(msg, 'Новые пароли не совпадают.', 'error')
-    if (next.value.trim().length < 10) return setMsg(msg, 'Новый пароль — минимум 10 символов.', 'error')
+    if (next.value !== repeat.value) return setMsg(msg, 'The new passwords do not match.', 'error')
+    if (next.value.trim().length < 10) return setMsg(msg, 'New password must be at least 10 characters.', 'error')
 
     saveBtn.disabled = true
-    setMsg(msg, 'Сохраняю…', 'info')
+    setMsg(msg, 'Saving…', 'info')
     try {
       const r = await fetch('/api/change-password', {
         method: 'POST',
@@ -64,13 +64,13 @@ export function initAccount(): void {
       })
       const d = (await r.json().catch(() => ({}))) as { ok?: boolean; error?: string }
       if (r.ok && d.ok) {
-        setMsg(msg, 'Пароль изменён. Сейчас откроется страница входа…', 'ok')
+        setMsg(msg, 'Password changed. Taking you to the sign-in page…', 'ok')
         window.setTimeout(() => (location.href = '/admin-login.html'), 1600)
         return
       }
-      setMsg(msg, d.error || 'Не удалось сменить пароль.', 'error')
+      setMsg(msg, d.error || 'Could not change the password.', 'error')
     } catch {
-      setMsg(msg, 'Сеть недоступна. Попробуйте ещё раз.', 'error')
+      setMsg(msg, 'Network unavailable. Please try again.', 'error')
     }
     saveBtn.disabled = false
   })

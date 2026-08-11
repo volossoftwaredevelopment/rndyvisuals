@@ -23,18 +23,18 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'PUT') {
-      if (!requireSession(req)) return res.status(401).json({ error: 'Сессия истекла — войдите заново.' })
+      if (!requireSession(req)) return res.status(401).json({ error: 'Your session expired — please sign in again.' })
 
       const { key, value } = await readJson(req)
-      if (!KEYS.has(key)) return res.status(400).json({ error: `Неизвестный раздел «${key}».` })
-      if (value === undefined || value === null) return res.status(400).json({ error: 'Пустое значение.' })
+      if (!KEYS.has(key)) return res.status(400).json({ error: `Unknown section “${key}”.` })
+      if (value === undefined || value === null) return res.status(400).json({ error: 'Empty value.' })
 
       const listKeys = ['videos', 'sponsors', 'products', 'reviews']
       if (listKeys.includes(key) && !Array.isArray(value)) {
-        return res.status(400).json({ error: `Раздел «${key}» должен быть списком.` })
+        return res.status(400).json({ error: `Section “${key}” must be a list.` })
       }
       if (!listKeys.includes(key) && (typeof value !== 'object' || Array.isArray(value))) {
-        return res.status(400).json({ error: `Раздел «${key}» должен быть объектом.` })
+        return res.status(400).json({ error: `Section “${key}” must be an object.` })
       }
 
       await sql`
@@ -49,6 +49,6 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'GET, PUT')
     return res.status(405).json({ error: 'Method not allowed' })
   } catch {
-    return res.status(500).json({ error: 'Ошибка сервера. Попробуйте ещё раз.' })
+    return res.status(500).json({ error: 'Server error. Please try again.' })
   }
 }

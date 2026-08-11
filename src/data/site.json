@@ -1,7 +1,9 @@
 {
   "hero": {
     "brand": "RNDY VISUALS",
-    "slogan": "FILMMAKER — AVAILABLE WORLDWIDE"
+    "slogan": "FILMMAKER — AVAILABLE WORLDWIDE",
+    "video": "./media/home-hero.mp4",
+    "poster": "./media/home-hero.jpg"
   },
   "contacts": {
     "instagram": "https://www.instagram.com/rndyvisuals/",

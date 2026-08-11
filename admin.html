@@ -17,58 +17,101 @@
       <header class="admin-head">
         <span class="admin-wordmark">RNDY — ADMIN</span>
         <span class="admin-head__actions">
-          <button id="pw-open" class="btn btn--ghost btn--sm" type="button">Сменить пароль</button>
-          <button id="logout" class="btn btn--ghost btn--sm" type="button">Выйти</button>
+          <a class="btn btn--ghost btn--sm" href="https://rndyvisuals.com" target="_blank" rel="noopener">View site ↗</a>
+          <button id="pw-open" class="btn btn--ghost btn--sm" type="button">Change password</button>
+          <button id="logout" class="btn btn--ghost btn--sm" type="button">Log out</button>
         </span>
       </header>
 
       <section class="panel" id="panel-password" hidden>
         <div class="panel-head">
-          <h2 class="panel-title">Смена пароля</h2>
+          <h2 class="panel-title">Change password</h2>
         </div>
         <div class="form">
           <label class="fld">
-            <span class="fld-label">Текущий пароль</span>
+            <span class="fld-label">Current password</span>
             <input id="pw-current" class="field" type="password" autocomplete="current-password" />
           </label>
           <label class="fld">
-            <span class="fld-label">Новый пароль (минимум 10 символов)</span>
+            <span class="fld-label">New password (10 characters minimum)</span>
             <input id="pw-next" class="field" type="password" autocomplete="new-password" />
           </label>
           <label class="fld">
-            <span class="fld-label">Повторите новый пароль</span>
+            <span class="fld-label">Repeat new password</span>
             <input id="pw-repeat" class="field" type="password" autocomplete="new-password" />
           </label>
           <p class="help">
-            После смены пароля вход выполняется заново. Запишите новый пароль — восстановить его
-            нельзя, только сбросить через разработчика.
+            You will be signed out and asked to sign in again with the new password. Write it down —
+            it cannot be recovered, only reset.
           </p>
           <p class="msg" id="pw-msg" role="status" aria-live="polite" hidden></p>
           <div class="publish-row">
-            <button id="pw-save" class="btn btn--primary" type="button">Сохранить пароль</button>
-            <button id="pw-cancel" class="btn btn--ghost" type="button">Отмена</button>
+            <button id="pw-save" class="btn btn--primary" type="button">Save password</button>
+            <button id="pw-cancel" class="btn btn--ghost" type="button">Cancel</button>
           </div>
         </div>
       </section>
 
-
       <section id="workspace">
         <nav class="tabs" aria-label="Content sections">
           <button class="tab-btn is-active" type="button" data-tab-btn="videos" aria-selected="true">Videos</button>
-          <button class="tab-btn" type="button" data-tab-btn="contacts" aria-selected="false">Contacts &amp; Home</button>
+          <button class="tab-btn" type="button" data-tab-btn="contacts" aria-selected="false">Text &amp; contacts</button>
           <button class="tab-btn" type="button" data-tab-btn="sponsors" aria-selected="false">Sponsors</button>
           <button class="tab-btn" type="button" data-tab-btn="products" aria-selected="false">Products</button>
         </nav>
 
         <!-- ------------------------------------------------ Videos tab -->
         <div class="tab-panel" data-tab-panel="videos">
+          <!-- visual map of the home page so it is obvious what goes where -->
+          <section class="panel">
+            <div class="panel-head">
+              <h2 class="panel-title">How the home page is laid out</h2>
+            </div>
+            <div class="layout-map" id="layout-map">
+              <div class="lmap__hero" data-map-hero>
+                <span class="lmap__tag">Main video — full screen</span>
+              </div>
+              <div class="lmap__strip"><span>Sponsor logos</span></div>
+              <div class="lmap__grid" data-map-grid></div>
+            </div>
+            <p class="help">
+              This mirrors the real page. The big block is the background film visitors see first;
+              the small tiles below are the film library, three per row on a computer.
+            </p>
+          </section>
+
+          <!-- 1. the hero film -->
+          <section class="panel">
+            <div class="panel-head">
+              <h2 class="panel-title">1 · Main video</h2>
+              <span class="panel-note" id="hero-note"></span>
+            </div>
+            <p class="help">
+              Plays full screen behind the logo — the first thing a visitor sees. Muted and looping,
+              so pick something that looks good without sound.
+            </p>
+            <div class="hero-slot">
+              <span class="hero-slot__thumb">
+                <img id="hero-thumb" alt="" hidden />
+                <span class="hero-slot__empty" id="hero-empty">No video</span>
+              </span>
+              <div class="hero-slot__side">
+                <span class="hero-slot__name" id="hero-name">—</span>
+                <button id="hero-replace" class="btn btn--sm" type="button">Replace main video</button>
+                <input id="hero-input" type="file" accept="video/mp4,video/webm,video/quicktime" hidden />
+              </div>
+            </div>
+            <p class="msg" id="hero-msg" role="status" aria-live="polite" hidden></p>
+          </section>
+
+          <!-- 2. the library -->
           <section class="panel" id="panel-videos">
             <div class="panel-head">
-              <h2 class="panel-title">Videos — top to bottom is the order on the site</h2>
+              <h2 class="panel-title">2 · Film library — top to bottom is the order on the site</h2>
               <span class="panel-note" id="videos-note"></span>
             </div>
             <p class="msg" id="videos-msg" hidden></p>
-            <button id="videos-retry" class="btn" type="button" hidden>Повторить</button>
+            <button id="videos-retry" class="btn" type="button" hidden>Try again</button>
             <ol class="rows" id="rows"></ol>
             <div class="add">
               <div class="add-row">
@@ -76,7 +119,7 @@
                   id="add-url"
                   class="field"
                   type="url"
-                  placeholder="Paste a YouTube or Vimeo link to add a film"
+                  placeholder="Paste a YouTube or Vimeo link"
                   spellcheck="false"
                   aria-label="Video link"
                 />
@@ -94,17 +137,16 @@
                 aria-hidden="true"
               />
               <div class="help help--limits">
-                <strong>Требования к видео</strong>
+                <strong>Video requirements</strong>
                 <ul>
-                  <li>Формат: <span data-limit-video>MP4 (H.264/H.265), MOV или WebM</span></li>
-                  <li>Максимальный размер: <span data-limit-video-max>2 ГБ</span> на файл</li>
-                  <li>Рекомендуется 1080p или 4K, H.264 — грузите исходное качество</li>
-                  <li>Постер-кадр создаётся автоматически из середины ролика</li>
+                  <li>Format: <span data-limit-video>MP4 (H.264/H.265), MOV or WebM</span></li>
+                  <li>Maximum size: <span data-limit-video-max>2 GB</span> per file</li>
+                  <li>1080p or 4K recommended — upload the original quality</li>
+                  <li>A poster frame is created automatically from the middle of the clip</li>
                 </ul>
                 <span class="help__note">
-                  Файл уходит напрямую в облачное хранилище (Cloudflare R2), а не в репозиторий —
-                  поэтому размер большой, а сайт не тяжелеет. Если формат или размер не подходят,
-                  вы увидите ошибку сразу при выборе файла.
+                  Files go straight to cloud storage, so they can be large without slowing the site
+                  down. If the format or size is wrong you will see the reason immediately.
                 </span>
               </div>
               <p class="msg" id="add-msg" role="status" aria-live="polite" hidden></p>
@@ -117,19 +159,19 @@
         <div class="tab-panel" data-tab-panel="contacts" hidden>
           <section class="panel">
             <div class="panel-head">
-              <h2 class="panel-title">Home &amp; contacts</h2>
+              <h2 class="panel-title">Text &amp; contacts</h2>
               <span class="panel-note" id="contacts-note"></span>
             </div>
             <p class="msg" id="contacts-msg" hidden></p>
             <form id="contacts-form" class="form">
               <fieldset class="form-group">
-                <legend>Home hero</legend>
+                <legend>Home page</legend>
                 <label class="fld">
-                  <span class="fld-label">Wordmark</span>
+                  <span class="fld-label">Wordmark — the big name over the video</span>
                   <input class="field" data-site="hero.brand" spellcheck="false" placeholder="RNDY VISUALS" />
                 </label>
                 <label class="fld">
-                  <span class="fld-label">Slogan</span>
+                  <span class="fld-label">Tagline — the small line underneath</span>
                   <input
                     class="field"
                     data-site="hero.slogan"
@@ -154,7 +196,7 @@
                   <input class="field" data-site="contacts.whatsapp" type="url" spellcheck="false" placeholder="https://wa.me/…" />
                 </label>
                 <label class="fld">
-                  <span class="fld-label">WhatsApp label</span>
+                  <span class="fld-label">WhatsApp number as shown</span>
                   <input class="field" data-site="contacts.whatsappLabel" spellcheck="false" placeholder="+30 693 463 1572" />
                 </label>
                 <label class="fld">
@@ -182,8 +224,8 @@
                   <span class="fld-label">Show the sponsor strip on the home page</span>
                 </label>
                 <p class="help">
-                  When off, the home page shows a slim divider instead of the logo marquee. Manage the logos
-                  themselves in the <strong>Sponsors</strong> tab.
+                  With this off the home page shows a slim divider instead of the logo strip. Manage
+                  the logos themselves in the <strong>Sponsors</strong> tab.
                 </p>
               </fieldset>
             </form>
@@ -194,13 +236,13 @@
         <div class="tab-panel" data-tab-panel="sponsors" hidden>
           <section class="panel">
             <div class="panel-head">
-              <h2 class="panel-title">Sponsors — top to bottom is the marquee order</h2>
+              <h2 class="panel-title">Sponsors — top to bottom is the order in the strip</h2>
               <span class="panel-note" id="sponsors-note"></span>
             </div>
             <p class="help">
-              Best logo: a <strong>transparent PNG or SVG</strong> with a white or light mark, about
-              <strong>600 × 200 px</strong> (at least 3× its on-site size), under 800 KB. The site tints every
-              logo white to sit on the dark strip, so a plain single-colour mark reads best.
+              Best logo: a <strong>transparent PNG or SVG</strong> with a white or light mark, around
+              <strong>600 × 200 px</strong>, under 15 MB. The strip is dark and every logo is tinted
+              white, so a plain single-colour mark reads best.
             </p>
             <p class="msg" id="sponsors-msg" hidden></p>
             <ol class="sponsor-rows" id="sponsor-rows"></ol>
@@ -262,7 +304,7 @@
                     </label>
                     <label class="fld">
                       <span class="fld-label">Price (€)</span>
-                      <input class="field" data-pf="price" type="number" inputmode="numeric" min="0" placeholder="0" />
+                      <input class="field" data-pf="price" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" />
                     </label>
                     <label class="fld">
                       <span class="fld-label">Cover hue (0–360)</span>
@@ -275,8 +317,8 @@
                     <option value="Assets"></option>
                   </datalist>
                   <label class="fld">
-                    <span class="fld-label">Blurb</span>
-                    <textarea class="field" data-pf="blurb" rows="3" placeholder="Short description shown in the product modal."></textarea>
+                    <span class="fld-label">Description</span>
+                    <textarea class="field" data-pf="blurb" rows="3" placeholder="Shown in the product window."></textarea>
                   </label>
                   <label class="fld">
                     <span class="fld-label">Features (one per line)</span>
@@ -286,7 +328,7 @@
 
                 <fieldset class="form-group">
                   <legend>Images (slideshow)</legend>
-                  <p class="help">The first image is the cover. Recommended ~1200 × 900 px, under 8 MB each.</p>
+                  <p class="help">The first image is the cover. Around 1200 × 900 px, under 15 MB each.</p>
                   <ol class="pe-images" id="pe-images"></ol>
                   <label class="btn btn--ghost sponsor-file">
                     Add images…
@@ -296,7 +338,7 @@
 
                 <fieldset class="form-group">
                   <legend>Downloadable file</legend>
-                  <p class="help">What the buyer downloads (LUTs, project files, a PDF…). Committed to the repo; keep it under 50 MB for this demo.</p>
+                  <p class="help">What the buyer downloads (LUTs, project files, a PDF…). Up to 500 MB.</p>
                   <div id="pe-download"></div>
                   <label class="btn btn--ghost sponsor-file">
                     Upload file…
@@ -308,21 +350,22 @@
           </section>
         </div>
 
-        <!-- ---------------------------------- shared publish + build bar -->
+        <!-- ------------------------------------------------ save bar -->
         <div class="publish" id="publish-bar">
           <div class="publish-row">
             <button id="publish-btn" class="btn btn--primary" type="button" data-publish-for="videos" disabled>
-              Publish
+              Save
             </button>
             <button id="contacts-publish" class="btn btn--primary" type="button" data-publish-for="contacts" hidden disabled>
-              Publish
+              Save
             </button>
             <button id="sponsors-publish" class="btn btn--primary" type="button" data-publish-for="sponsors" hidden disabled>
-              Publish
+              Save
             </button>
             <button id="products-publish" class="btn btn--primary" type="button" data-publish-for="products" hidden disabled>
-              Publish
+              Save
             </button>
+            <span class="publish-hint">Changes go live on the site straight away.</span>
           </div>
         </div>
       </section>

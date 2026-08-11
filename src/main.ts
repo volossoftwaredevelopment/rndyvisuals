@@ -102,10 +102,25 @@ function renderHeroText(): void {
   if (slogan) slogan.textContent = HERO().slogan
 }
 
+// The background film is editable too — swap it only when it actually differs,
+// so re-applying live content never restarts playback.
+function renderHeroVideo(): void {
+  const el = document.querySelector<HTMLVideoElement>('.hero__video')
+  if (!el) return
+  const { video, poster } = HERO()
+  if (poster && el.getAttribute('poster') !== poster) el.poster = poster
+  if (video && el.getAttribute('src') !== video) {
+    el.src = video
+    el.load()
+    if (!reduced) void el.play().catch(() => {})
+  }
+}
+
 // First paint from the bundled snapshot — instant, and correct if the API is down.
 renderGrid()
 renderSponsors()
 renderHeroText()
+renderHeroVideo()
 
 // Then refresh from the database so an admin edit appears without a rebuild.
 // Only re-render the parts that actually changed, so the reveal animations and
@@ -117,6 +132,7 @@ void loadContent().then(() => {
   renderGrid()
   renderSponsors()
   renderHeroText()
+  renderHeroVideo()
   ScrollTrigger.refresh()
 })
 

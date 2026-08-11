@@ -19,13 +19,13 @@ export default async function handler(req, res) {
   }
 
   const secret = process.env.SESSION_SECRET
-  if (!secret) return res.status(503).json({ error: 'Сервер не настроен (SESSION_SECRET).' })
+  if (!secret) return res.status(503).json({ error: 'Server is not configured (SESSION_SECRET).' })
 
   const ip = clientIp(req)
 
   try {
     if (await tooManyAttempts(ip)) {
-      return res.status(429).json({ error: 'Слишком много попыток. Подождите 15 минут.' })
+      return res.status(429).json({ error: 'Too many attempts. Please wait 15 minutes.' })
     }
 
     const { password, turnstileToken } = await readJson(req)
@@ -33,28 +33,28 @@ export default async function handler(req, res) {
     const captcha = await verifyTurnstile(turnstileToken, ip)
     if (captcha === 'failed') {
       await logEvent('login_failed', ip)
-      return res.status(400).json({ error: 'Проверка «я не робот» не пройдена. Обновите страницу.' })
+      return res.status(400).json({ error: 'The “I am not a robot” check failed. Please reload the page.' })
     }
     if (captcha === 'unavailable') {
-      // не блокируем владельца, но фиксируем в журнале
+      // do not lock the owner out, but record it in the log
       await logEvent('captcha_skipped', ip)
     }
 
     if (typeof password !== 'string' || password.length === 0) {
       await logEvent('login_failed', ip)
-      return res.status(400).json({ error: 'Введите пароль.' })
+      return res.status(400).json({ error: 'Enter your password.' })
     }
 
     const [row] = await sql`select password_hash from admin_auth where id = 1`
     if (!row || !verifyPassword(password, row.password_hash)) {
       await logEvent('login_failed', ip)
-      return res.status(401).json({ error: 'Неверный пароль.' })
+      return res.status(401).json({ error: 'Wrong password.' })
     }
 
     await logEvent('login_ok', ip)
     res.setHeader('Set-Cookie', sessionCookie(issueToken(secret)))
     return res.status(200).json({ ok: true })
   } catch (err) {
-    return res.status(500).json({ error: 'Ошибка сервера. Попробуйте ещё раз.' })
+    return res.status(500).json({ error: 'Server error. Please try again.' })
   }
 }

@@ -68,9 +68,9 @@ export function createContactsPanel(ctx: AdminCtx): Panel {
 
   function updateUI(): void {
     const isDirty = dirty()
-    publishBtn.textContent = saving ? 'Сохраняю…' : isDirty ? 'Сохранить' : 'Сохранено'
+    publishBtn.textContent = saving ? 'Saving…' : isDirty ? 'Save' : 'Saved'
     publishBtn.disabled = saving || !isDirty || !ctx.valid()
-    note.textContent = !loaded ? '' : isDirty ? 'Есть несохранённые правки' : 'Всё сохранено'
+    note.textContent = !loaded ? '' : isDirty ? 'Unsaved changes' : 'All changes saved'
     note.classList.toggle('is-dirty', isDirty)
   }
 
@@ -110,9 +110,9 @@ export function createContactsPanel(ctx: AdminCtx): Panel {
       data = clean
       baseline = serialize()
       fillForm()
-      setMsg(msg, 'Сохранено — уже на сайте.', 'ok')
+      setMsg(msg, 'Saved — already live on the site.', 'ok')
     } catch (err) {
-      setMsg(msg, err instanceof Error ? err.message : 'Не удалось сохранить.', 'error')
+      setMsg(msg, err instanceof Error ? err.message : 'Could not save.', 'error')
     } finally {
       saving = false
       updateUI()
@@ -132,7 +132,7 @@ export function createContactsPanel(ctx: AdminCtx): Panel {
 
   return {
     async load(): Promise<void> {
-      setMsg(msg, 'Загружаю…', 'info')
+      setMsg(msg, 'Loading…', 'info')
       try {
         data = {
           hero: await get<Hero>('hero', { brand: '', slogan: '' }),
@@ -145,7 +145,7 @@ export function createContactsPanel(ctx: AdminCtx): Panel {
         setMsg(msg, '')
         updateUI()
       } catch (err) {
-        setMsg(msg, err instanceof Error ? err.message : 'Не удалось загрузить.', 'error')
+        setMsg(msg, err instanceof Error ? err.message : 'Could not load.', 'error')
       }
     },
     reset(): void {

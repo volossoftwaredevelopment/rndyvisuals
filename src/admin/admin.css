@@ -1013,7 +1013,158 @@ textarea.field {
 .publish-row {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 14px;
+}
+
+/* A <button> is a flex item whose automatic minimum size browsers happily
+   ignore, so a long label like "Save 9 changes" could be clipped by its own
+   box. Never let the save buttons shrink. */
+.publish-row .btn {
+  flex: 0 0 auto;
+  min-width: max-content;
+}
+
+.publish-hint {
+  color: var(--ink-low, #4e5b60);
+  font-size: 0.75rem;
+}
+
+/* ---------------------------- home-page layout map ---------------------- */
+
+.layout-map {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--line, #1c2730);
+  border-radius: 6px;
+  background: var(--bg, #070b0f);
+}
+
+.lmap__hero {
+  position: relative;
+  height: 108px;
+  border-radius: 4px;
+  border: 1px solid var(--accent-dim, #2e5f58);
+  background-size: cover;
+  background-position: center;
+  background-color: var(--surface-2, #131c24);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.lmap__hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(7, 11, 15, 0.45);
+}
+
+.lmap__tag {
+  position: relative;
+  z-index: 1;
+  font-size: var(--fs-micro, 0.6875rem);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-hi, #eaf0ef);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7);
+}
+
+.lmap__strip {
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 3px;
+  background: var(--surface-2, #131c24);
+  border: 1px solid var(--line, #1c2730);
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-low, #4e5b60);
+}
+
+.lmap__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+}
+
+.lmap__tile {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--surface-2, #131c24);
+  background-size: cover;
+  background-position: center;
+  border: 1px solid var(--line, #1c2730);
+}
+
+.lmap__tile span {
+  position: absolute;
+  left: 3px;
+  top: 2px;
+  font-size: 0.5625rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-hi, #eaf0ef);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
+.lmap__tile--empty {
+  border-style: dashed;
+}
+
+/* ------------------------------- hero slot ------------------------------ */
+
+.hero-slot {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.hero-slot__thumb {
+  position: relative;
+  flex: none;
+  width: 220px;
+  aspect-ratio: 16 / 9;
+  border-radius: 5px;
+  overflow: hidden;
+  background: var(--surface-2, #131c24);
+  border: 1px solid var(--line-strong, #2c3a45);
+  display: grid;
+  place-items: center;
+}
+
+.hero-slot__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.hero-slot__empty {
+  font-size: var(--fs-micro, 0.6875rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-low, #4e5b60);
+}
+
+.hero-slot__side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.hero-slot__name {
+  font-size: 0.8125rem;
+  color: var(--ink, #b8c4c6);
+  word-break: break-all;
 }
 
 .deploy {

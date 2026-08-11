@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="ru">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex,nofollow" />
     <meta name="color-scheme" content="dark" />
-    <title>RNDY — вход в админку</title>
+    <title>RNDY — Admin sign in</title>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <style>
       * { box-sizing: border-box; }
@@ -50,10 +50,10 @@
   <body>
     <main class="card">
       <div class="brand">RNDY — ADMIN</div>
-      <div class="sub">Вход в панель управления</div>
+      <div class="sub">Sign in to the control panel</div>
 
       <form id="form" autocomplete="off">
-        <label for="pw">Пароль</label>
+        <label for="pw">Password</label>
         <input id="pw" type="password" autocomplete="current-password" autofocus
                placeholder="XXXX-XXXX-XXXX-XXXX" aria-describedby="msg" />
         <div class="turnstile cf-turnstile"
@@ -62,13 +62,12 @@
              data-callback="onCaptcha"
              data-expired-callback="onCaptchaExpired"
              data-error-callback="onCaptchaExpired"></div>
-        <button id="btn" type="submit" disabled>Проверка…</button>
+        <button id="btn" type="submit" disabled>Checking…</button>
       </form>
 
       <p class="msg" id="msg" role="status" aria-live="polite"></p>
       <p class="hint">
-        Пароль выдан при настройке (см. PDF на рабочем столе). Сменить его можно
-        внутри админки. После 8 неудачных попыток вход блокируется на 15 минут.
+        Your password was issued during setup (see the PDF on the desktop). You can change it inside the admin. After 8 failed attempts sign-in is blocked for 15 minutes.
       </p>
     </main>
 
@@ -84,29 +83,29 @@
       window.onCaptcha = function (token) {
         captchaToken = token
         btn.disabled = false
-        btn.textContent = 'Войти'
+        btn.textContent = 'Sign in'
         say('')
       }
       window.onCaptchaExpired = function () {
         captchaToken = ''
         btn.disabled = true
-        btn.textContent = 'Проверка…'
-        say('Проверка устарела — обновите страницу.', 'err')
+        btn.textContent = 'Checking…'
+        say('The check expired — please reload the page.', 'err')
       }
       // If Turnstile can't load at all, don't strand the owner behind a dead gate.
       setTimeout(function () {
         if (!captchaToken && typeof window.turnstile === 'undefined') {
           btn.disabled = false
-          btn.textContent = 'Войти'
+          btn.textContent = 'Sign in'
         }
       }, 6000)
 
       document.getElementById('form').addEventListener('submit', async function (e) {
         e.preventDefault()
         var pw = document.getElementById('pw').value
-        if (!pw) return say('Введите пароль.', 'err')
+        if (!pw) return say('Enter your password.', 'err')
         btn.disabled = true
-        btn.textContent = 'Вход…'
+        btn.textContent = 'Signing in…'
         say('')
         try {
           var r = await fetch('/api/login', {
@@ -116,16 +115,16 @@
           })
           var d = await r.json().catch(function () { return {} })
           if (r.ok && d.ok) {
-            say('Готово — открываю админку…', 'ok')
+            say('Done — opening the admin…', 'ok')
             location.href = '/admin.html'
             return
           }
-          say(d.error || 'Не удалось войти.', 'err')
+          say(d.error || 'Could not sign in.', 'err')
         } catch (err) {
-          say('Сеть недоступна. Попробуйте ещё раз.', 'err')
+          say('Network unavailable. Please try again.', 'err')
         }
         btn.disabled = false
-        btn.textContent = 'Войти'
+        btn.textContent = 'Sign in'
         if (window.turnstile) { try { window.turnstile.reset() } catch (e) {} }
         captchaToken = ''
       })
