@@ -5,6 +5,7 @@
 
 import { get, save } from './store'
 import { checkFile, uploadToR2 } from './r2upload'
+import { attachGridDnd } from './gridDnd'
 import type { VideoEntry } from './types'
 
 interface Hero {
@@ -28,13 +29,19 @@ function setMsg(el: HTMLElement | null, text: string, kind: 'error' | 'ok' | 'in
 
 const fileName = (url: string): string => url.split('/').pop() || url
 
+const escapeHtml = (s: string): string =>
+  s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string)
+
 export interface HeroApi {
   load(): Promise<void>
   /** Redraw the map — call whenever the film library changes. */
   paintMap(videos: VideoEntry[]): void
 }
 
-export function createHero(posterFor: (file: File) => Promise<{ dataUrl: string } | null>): HeroApi {
+export function createHero(
+  posterFor: (file: File) => Promise<{ dataUrl: string } | null>,
+  onReorder?: (from: number, to: number) => void,
+): HeroApi {
   const thumb = $<HTMLImageElement>('#hero-thumb')
   const empty = $('#hero-empty')
   const nameEl = $('#hero-name')
@@ -68,23 +75,16 @@ export function createHero(posterFor: (file: File) => Promise<{ dataUrl: string 
   function paintMap(videos: VideoEntry[]): void {
     if (!mapGrid) return
     mapGrid.textContent = ''
-    const shown = videos.slice(0, 9)
-    const cells = shown.length ? shown : Array.from({ length: 3 }, () => null)
+    const cells: (VideoEntry | null)[] = videos.length ? videos : [null, null, null]
     cells.forEach((v, i) => {
       const cell = document.createElement('div')
-      cell.className = 'lmap__tile' + (v ? '' : ' lmap__tile--empty')
+      cell.className = 'lmap__tile' + (v ? ' lmap__tile--film' : ' lmap__tile--empty')
       if (v?.poster) cell.style.backgroundImage = `url("${v.poster}")`
-      cell.innerHTML = `<span>${i + 1}</span>`
-      cell.title = v ? v.title || `Film ${i + 1}` : 'Empty slot'
+      const name = v ? v.title || `Film ${i + 1}` : 'Empty slot'
+      cell.innerHTML = `<span class="lmap__num">${i + 1}</span><span class="lmap__name">${escapeHtml(name)}</span>`
+      cell.title = v ? `${name} — drag to move it to another slot` : 'Empty slot'
       mapGrid.appendChild(cell)
     })
-    if (videos.length > 9) {
-      const more = document.createElement('div')
-      more.className = 'lmap__tile lmap__tile--empty'
-      more.innerHTML = `<span>+${videos.length - 9}</span>`
-      more.title = `${videos.length - 9} more below`
-      mapGrid.appendChild(more)
-    }
   }
 
   async function replace(file: File): Promise<void> {
@@ -129,6 +129,14 @@ export function createHero(posterFor: (file: File) => Promise<{ dataUrl: string 
     } catch (err) {
       setMsg(msg, err instanceof Error ? err.message : 'Could not remove the video.', 'error')
     }
+  }
+
+  // Drag a tile onto another to put that film in the other slot.
+  if (mapGrid && onReorder) {
+    attachGridDnd(mapGrid, '.lmap__tile', {
+      onMove: onReorder,
+      isDraggable: (el) => el.classList.contains('lmap__tile--film'),
+    })
   }
 
   replaceBtn?.addEventListener('click', () => input?.click())

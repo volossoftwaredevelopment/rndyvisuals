@@ -57,7 +57,11 @@ const productsPanel = createProductsPanel(ctx)
 const extraPanels: Panel[] = [contactsPanel, sponsorsPanel, productsPanel]
 
 // Main-video slot + the home-page map (shares the poster grabber below).
-const heroSlot = createHero((file) => posterFromVideo(file))
+const heroSlot = createHero(
+  (file) => posterFromVideo(file),
+  // dragging a tile on the map reorders the real library
+  (from, to) => moveVideo(from, to),
+)
 
 // Always-visible ON/OFF buttons for the sponsor strip, shop and testimonials.
 const sections = createSections()
