@@ -245,12 +245,12 @@ function anyDirty(): boolean {
 function updatePublishUI(): void {
   const changes = countChanges()
   ui.publishBtn.textContent = state.publishing
-    ? 'Publishing…'
+    ? 'Saving…'
     : changes > 0
-      ? `Publish ${changes} change${changes === 1 ? '' : 's'}`
-      : 'Publish'
-  ui.publishBtn.disabled = state.publishing || changes === 0 || !true
-  ui.videosNote.textContent = changes > 0 ? 'Unpublished changes' : 'All changes published'
+      ? `Save ${changes} change${changes === 1 ? '' : 's'}`
+      : 'Saved'
+  ui.publishBtn.disabled = state.publishing || changes === 0
+  ui.videosNote.textContent = changes > 0 ? 'Unsaved changes' : 'All changes saved'
   ui.videosNote.classList.toggle('is-dirty', changes > 0)
 }
 
