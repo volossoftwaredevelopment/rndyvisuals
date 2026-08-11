@@ -128,31 +128,6 @@
   gap: 0;
 }
 
-/* empty slot placeholders when there are no films yet */
-.tile.tile--placeholder {
-  cursor: default;
-}
-
-.tile--placeholder .tile__media {
-  display: grid;
-  place-items: center;
-  background: var(--surface);
-  outline: 1px dashed var(--line-strong);
-  outline-offset: -8px;
-}
-
-.tile--placeholder .tile__media::after {
-  display: none;
-}
-
-.tile__slot {
-  font-size: var(--fs-micro);
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ink-mid);
-}
-
 .tile {
   position: relative;
   display: block;

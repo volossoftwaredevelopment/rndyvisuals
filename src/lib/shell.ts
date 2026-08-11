@@ -5,6 +5,7 @@
 import { SITE } from '../site.config'
 import { CONTACTS, PRODUCTS_ENABLED, REVIEWS_ENABLED, contentReady } from '../data/content'
 import { iconLabel } from './icons'
+import type { IconName } from './icons'
 import { initCart } from './cart'
 import { lockScroll, unlockScroll, trapFocus } from './ui'
 
@@ -74,6 +75,41 @@ function buildHeader(page: PageId): HTMLElement {
 function footerHTML(): string {
   const ext = 'target="_blank" rel="noopener noreferrer"'
   const nt = '<span class="sr-only"> (opens in a new tab)</span>'
+  const c = CONTACTS()
+
+  // Only render a link that actually has an address — an icon with nowhere to go
+  // is worse than no icon at all.
+  const link = (url: string | undefined, icon: IconName, label: string, mail = false): string => {
+    const href = String(url ?? '').trim()
+    if (!href) return ''
+    return mail
+      ? `<a href="mailto:${href}">${iconLabel(icon, label)}</a>`
+      : `<a href="${href}" ${ext}>${iconLabel(icon, label)}${nt}</a>`
+  }
+
+  const social = [
+    link(c.instagram, 'instagram', 'Instagram'),
+    link(c.youtube, 'youtube', 'YouTube'),
+    link(c.linkedin, 'linkedin', 'LinkedIn'),
+    link(c.x, 'x', 'X'),
+  ].filter(Boolean)
+
+  const contact = [
+    link(c.whatsapp, 'whatsapp', 'WhatsApp'),
+    link(c.telegram, 'telegram', 'Telegram'),
+    link(c.email, 'email', 'Email', true),
+  ].filter(Boolean)
+
+  // A column with no links is dropped entirely, so the footer never shows an
+  // empty heading.
+  const column = (title: string, links: string[]): string =>
+    links.length
+      ? `<nav class="site-footer__col" aria-label="${title}">
+        <h2 class="site-footer__h micro">${title}</h2>
+        ${links.join('\n        ')}
+      </nav>`
+      : ''
+
   return `
     <span class="rule-line" data-reveal="rule" aria-hidden="true"></span>
     <div class="site-footer__grid">
@@ -82,20 +118,8 @@ function footerHTML(): string {
         <p class="site-footer__tag micro">Videography — available worldwide</p>
       </div>
 
-      <nav class="site-footer__col" aria-label="Social">
-        <h2 class="site-footer__h micro">Social</h2>
-        <a href="${CONTACTS().instagram}" ${ext}>${iconLabel('instagram', 'Instagram')}${nt}</a>
-        <a href="${CONTACTS().youtube}" ${ext}>${iconLabel('youtube', 'YouTube')}${nt}</a>
-        <a href="${CONTACTS().linkedin}" ${ext}>${iconLabel('linkedin', 'LinkedIn')}${nt}</a>
-        <a href="${CONTACTS().x}" ${ext}>${iconLabel('x', 'X')}${nt}</a>
-      </nav>
-
-      <nav class="site-footer__col" aria-label="Contact">
-        <h2 class="site-footer__h micro">Contact</h2>
-        <a href="${CONTACTS().whatsapp}" ${ext}>${iconLabel('whatsapp', 'WhatsApp')}${nt}</a>
-        <a href="${CONTACTS().telegram}" ${ext}>${iconLabel('telegram', 'Telegram')}${nt}</a>
-        <a href="mailto:${CONTACTS().email}">${iconLabel('email', 'Email')}</a>
-      </nav>
+      ${column('Social', social)}
+      ${column('Contact', contact)}
 
       <div class="site-footer__col">
         <h2 class="site-footer__h micro">Info</h2>

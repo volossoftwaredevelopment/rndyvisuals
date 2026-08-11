@@ -33,14 +33,10 @@
       <section class="hero" id="top" aria-label="rndyvisuals — filmmaker">
         <div class="hero__media" aria-hidden="true">
           <div class="hero__media-inner">
-            <video
-              class="hero__video"
-              src="./media/home-hero.mp4"
-              poster="./media/home-hero.jpg"
-              muted
-              loop
-              playsinline
-            ></video>
+            <!-- src/poster are set from the content API at runtime. Hard-coding a
+                 file here made the browser start loading it before scripts ran, so a
+                 film removed in the admin still flashed on screen for a moment. -->
+            <video class="hero__video" muted loop playsinline hidden></video>
           </div>
           <div class="hero__scrim"></div>
         </div>

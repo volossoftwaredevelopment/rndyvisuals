@@ -1,15 +1,3 @@
 {
-  "videos": [
-    { "id": "viva-la-malta-1", "title": "Viva la Malta", "source": { "type": "file", "url": "./media/viva-la-malta.mp4" }, "poster": "./media/viva-la-malta.jpg", "featured": false },
-    { "id": "a-love-story-1", "title": "A Love Story", "source": { "type": "file", "url": "./media/love-story.mp4" }, "poster": "./media/love-story.jpg", "featured": false },
-    { "id": "seaquill-1", "title": "Seaquill", "source": { "type": "file", "url": "./media/seaquill.mp4" }, "poster": "./media/seaquill.jpg", "featured": false },
-
-    { "id": "a-love-story-2", "title": "A Love Story", "source": { "type": "file", "url": "./media/love-story.mp4" }, "poster": "./media/love-story.jpg", "featured": false },
-    { "id": "seaquill-2", "title": "Seaquill", "source": { "type": "file", "url": "./media/seaquill.mp4" }, "poster": "./media/seaquill.jpg", "featured": false },
-    { "id": "viva-la-malta-2", "title": "Viva la Malta", "source": { "type": "file", "url": "./media/viva-la-malta.mp4" }, "poster": "./media/viva-la-malta.jpg", "featured": false },
-
-    { "id": "seaquill-3", "title": "Seaquill", "source": { "type": "file", "url": "./media/seaquill.mp4" }, "poster": "./media/seaquill.jpg", "featured": false },
-    { "id": "viva-la-malta-3", "title": "Viva la Malta", "source": { "type": "file", "url": "./media/viva-la-malta.mp4" }, "poster": "./media/viva-la-malta.jpg", "featured": false },
-    { "id": "a-love-story-3", "title": "A Love Story", "source": { "type": "file", "url": "./media/love-story.mp4" }, "poster": "./media/love-story.jpg", "featured": false }
-  ]
+  "videos": []
 }

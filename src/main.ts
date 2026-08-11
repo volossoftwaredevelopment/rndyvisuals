@@ -63,6 +63,10 @@ function renderGrid(): void {
   if (!gridMount) return
   videos = content().videos
   gridMount.textContent = ''
+  // With no films the whole section is hidden — no empty band, no placeholders.
+  const section = gridMount.closest<HTMLElement>('.work')
+  if (section) section.hidden = videos.length === 0
+  if (videos.length === 0) return
   renderVideoGrid(gridMount, videos, { reduced, onOpen: (i) => void openOverlay(i) })
 }
 

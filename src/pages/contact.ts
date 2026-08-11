@@ -1,40 +1,54 @@
 import { CONTACTS, contentReady } from '../data/content'
 import { iconLabel } from '../lib/icons'
 import type { IconName } from '../lib/icons'
+import { esc } from '../lib/esc'
 import { initPage } from './page'
 
-// render the contact + social buttons from the live content store
 const mount = document.querySelector<HTMLElement>('[data-contact]')
 
+interface Item {
+  icon: IconName
+  label: string
+  href: string
+  ext: boolean
+}
+
+const nt = '<span class="sr-only"> (opens in a new tab)</span>'
+
+/** Render the contact buttons — only the ones that actually have an address. */
 function render(): void {
   if (!mount) return
-  {
-  const nt = '<span class="sr-only"> (opens in a new tab)</span>'
-  interface Item {
-    icon: IconName
-    label: string
-    href: string
-    ext: boolean
-  }
+  const c = CONTACTS()
+  const has = (v: string | undefined): string => String(v ?? '').trim()
+
+  const item = (icon: IconName, label: string, href: string, ext = true): Item | null =>
+    href ? { icon, label, href, ext } : null
+
   const groups: { h: string; items: Item[] }[] = [
     {
       h: 'Contact',
       items: [
-        { icon: 'whatsapp', label: `WhatsApp ${CONTACTS().whatsappLabel}`, href: CONTACTS().whatsapp, ext: true },
-        { icon: 'telegram', label: 'Telegram', href: CONTACTS().telegram, ext: true },
-        { icon: 'email', label: CONTACTS().email, href: `mailto:${CONTACTS().email}`, ext: false },
-      ],
+        item('whatsapp', `WhatsApp ${has(c.whatsappLabel)}`.trim(), has(c.whatsapp)),
+        item('telegram', 'Telegram', has(c.telegram)),
+        has(c.email) ? { icon: 'email', label: has(c.email), href: `mailto:${has(c.email)}`, ext: false } : null,
+      ].filter(Boolean) as Item[],
     },
     {
       h: 'Social',
       items: [
-        { icon: 'instagram', label: 'Instagram', href: CONTACTS().instagram, ext: true },
-        { icon: 'youtube', label: 'YouTube', href: CONTACTS().youtube, ext: true },
-        { icon: 'linkedin', label: 'LinkedIn', href: CONTACTS().linkedin, ext: true },
-        { icon: 'x', label: 'X', href: CONTACTS().x, ext: true },
-      ],
+        item('instagram', 'Instagram', has(c.instagram)),
+        item('youtube', 'YouTube', has(c.youtube)),
+        item('linkedin', 'LinkedIn', has(c.linkedin)),
+        item('x', 'X', has(c.x)),
+      ].filter(Boolean) as Item[],
     },
-  ]
+  ].filter((g) => g.items.length > 0) // a group with nothing in it is dropped
+
+  if (groups.length === 0) {
+    mount.innerHTML = '<p class="page__body" data-reveal="fade-up">Contact details are on their way.</p>'
+    return
+  }
+
   mount.innerHTML = groups
     .map(
       (g) => `
@@ -44,14 +58,13 @@ function render(): void {
           ${g.items
             .map(
               (i) =>
-                `<a class="btn btn--lg" href="${i.href}"${i.ext ? ' target="_blank" rel="noopener noreferrer"' : ''}>${iconLabel(i.icon, i.label)}${i.ext ? nt : ''}</a>`,
+                `<a class="btn btn--lg" href="${esc(i.href)}"${i.ext ? ' target="_blank" rel="noopener noreferrer"' : ''}>${iconLabel(i.icon, esc(i.label))}${i.ext ? nt : ''}</a>`,
             )
             .join('')}
         </div>
       </div>`,
     )
     .join('')
-  }
 }
 
 // render once the live contacts are in
