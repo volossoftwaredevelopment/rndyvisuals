@@ -63,6 +63,8 @@ const heroSlot = createHero(
   (file) => posterFromVideo(file),
   // dragging a tile on the map reorders the real library
   (from, to) => moveVideo(from, to),
+  // the main video changed — re-badge whichever row it came from
+  () => renderRows(),
 )
 
 // Always-visible ON/OFF buttons for the sponsor strip, shop and testimonials.
@@ -283,6 +285,7 @@ const ROW_HTML = `
     <div class="row-top">
       <input class="f-title" data-field="title" placeholder="Title" spellcheck="false" aria-label="Title" />
       <span class="badge" data-badge></span>
+      <span class="badge badge--main" data-main hidden>MAIN VIDEO</span>
       <button class="x" type="button" data-act="delete" title="Delete" aria-label="Delete">×</button>
     </div>
     <div class="row-media">
@@ -303,6 +306,12 @@ function previewPoster(poster: string): string {
   return poster || ''
 }
 
+/** True when this row's file is the one currently behind the logo. */
+function isMainVideo(video: VideoEntry): boolean {
+  const url = video.source.type === 'file' ? video.source.url : ''
+  return !!url && url === heroSlot.videoUrl()
+}
+
 function buildRow(video: VideoEntry, index: number, total: number): HTMLLIElement {
   const li = document.createElement('li')
   li.className = 'row'
@@ -321,6 +330,10 @@ function buildRow(video: VideoEntry, index: number, total: number): HTMLLIElemen
   // An empty slot has nothing to replace — it is waiting for its first upload.
   q('[data-act="replace-video-btn"]').textContent =
     video.source.type === 'placeholder' ? 'Upload video' : 'Replace video'
+  // Same film as the one behind the logo? Say so, so the two are never a surprise.
+  const main = q('[data-main]')
+  main.hidden = !isMainVideo(video)
+  main.title = 'This film is also playing full screen behind the logo'
   q<HTMLButtonElement>('[data-act="up"]').disabled = index === 0
   q<HTMLButtonElement>('[data-act="down"]').disabled = index === total - 1
   return li
@@ -591,7 +604,12 @@ function bindEvents(): void {
       btn.closest('.row-media')?.querySelector<HTMLInputElement>('input[data-act="replace-video"]')?.click()
     } else if (act === 'delete') {
       const name = video.title.trim() || video.id
-      if (window.confirm(`Delete “${name}”? It disappears from the site once you save.`)) {
+      // Reassure rather than block: the main video holds its own copy of the URL,
+      // and the file itself is never deleted from storage.
+      const alsoMain = isMainVideo(video)
+        ? '\n\nThis film is also the main video. That will keep playing — the main slot is not cleared.'
+        : ''
+      if (window.confirm(`Delete “${name}”? It disappears from the site once you save.${alsoMain}`)) {
         // the file itself stays in R2 — removing it here only drops the entry
         state.videos.splice(index, 1)
         renderRows()

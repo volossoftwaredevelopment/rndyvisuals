@@ -37,11 +37,15 @@ export interface HeroApi {
   load(): Promise<void>
   /** Redraw the map — call whenever the film library changes. */
   paintMap(videos: VideoEntry[]): void
+  /** URL of the film currently in the main slot, '' if empty. */
+  videoUrl(): string
 }
 
 export function createHero(
   posterFor: (file: File) => Promise<{ dataUrl: string } | null>,
   onReorder?: (from: number, to: number) => void,
+  /** Called after the slot changes, so the library rows can re-badge. */
+  onChange?: () => void,
 ): HeroApi {
   const thumb = $<HTMLImageElement>('#hero-thumb')
   const empty = $('#hero-empty')
@@ -53,10 +57,16 @@ export function createHero(
   const msg = $('#hero-msg')
   const note = $('#hero-note')
   const hint = $('#hero-hint')
+  const pickBtn = $<HTMLButtonElement>('#hero-pick')
+  const picker = $('#hero-picker')
+  const pickList = $('#hero-pick-list')
+  const pickNote = $('#hero-pick-note')
+  const pickCancel = $<HTMLButtonElement>('#hero-pick-cancel')
   const mapHero = $('[data-map-hero]')
   const mapGrid = $('[data-map-grid]')
 
   let hero: Hero = { brand: '', slogan: '' }
+  let library: VideoEntry[] = []
   const progress = msg ? createProgress(msg) : null
 
   // The one button changes its job with the slot: with nothing uploaded there is
@@ -91,6 +101,8 @@ export function createHero(
   }
 
   function paintMap(videos: VideoEntry[]): void {
+    library = videos
+    if (picker && !picker.hidden) paintPicker()
     if (!mapGrid) return
     mapGrid.textContent = ''
     const cells: (VideoEntry | null)[] = videos.length ? videos : [null, null, null]
@@ -103,6 +115,90 @@ export function createHero(
       cell.title = v ? `${name} — drag to move it to another slot` : 'Empty slot'
       mapGrid.appendChild(cell)
     })
+  }
+
+  // Only uploaded films can become the background: the hero is a muted, looping
+  // <video>, so a YouTube or Vimeo entry has nothing to give it.
+  const usable = (v: VideoEntry): boolean => v.source.type === 'file' && !!v.source.url
+
+  function paintPicker(): void {
+    if (!pickList) return
+    pickList.textContent = ''
+    const films = library.filter(usable)
+    const linked = library.filter((v) => v.source.type === 'youtube' || v.source.type === 'vimeo').length
+    const blank = library.length - films.length - linked
+
+    if (!films.length) {
+      const li = document.createElement('li')
+      li.className = 'hero-pick__empty'
+      li.textContent = library.length
+        ? 'No uploaded films yet — only YouTube/Vimeo entries, which cannot be used as the background.'
+        : 'The library is empty. Upload a film below first, or upload a video straight into this slot.'
+      pickList.appendChild(li)
+    }
+
+    films.forEach((v, i) => {
+      const url = v.source.url as string
+      const current = url === hero.video
+      const li = document.createElement('li')
+      const btn = document.createElement('button')
+      btn.type = 'button'
+      btn.className = 'hero-pick__item' + (current ? ' is-current' : '')
+      btn.disabled = current
+      const title = v.title.trim() || `Film ${i + 1}`
+      btn.innerHTML = `
+        <span class="hero-pick__thumb"${v.poster ? ` style="background-image:url('${escapeHtml(v.poster)}')"` : ''}></span>
+        <span class="hero-pick__title">${escapeHtml(title)}</span>
+        <span class="hero-pick__act">${current ? 'Already the main video' : 'Use this'}</span>`
+      btn.addEventListener('click', () => void useFromLibrary(v))
+      li.appendChild(btn)
+      pickList.appendChild(li)
+    })
+
+    // Say precisely what is missing from the list, or the count reads as a bug.
+    if (pickNote) {
+      const missing: string[] = []
+      if (linked) missing.push(`${linked} YouTube/Vimeo ${linked === 1 ? 'link' : 'links'}`)
+      if (blank) missing.push(`${blank} empty ${blank === 1 ? 'slot' : 'slots'}`)
+      pickNote.hidden = missing.length === 0
+      pickNote.textContent = missing.length
+        ? `Not listed: ${missing.join(' and ')} — only an uploaded video file can play as the background.`
+        : ''
+    }
+  }
+
+  function openPicker(): void {
+    if (!picker) return
+    paintPicker()
+    picker.hidden = false
+    pickBtn?.setAttribute('aria-expanded', 'true')
+    // the first film may already be the main video, and so disabled — skip to
+    // something actually focusable, otherwise focus is left stranded on <body>
+    picker.querySelector<HTMLElement>('button:not([disabled])')?.focus()
+  }
+
+  function closePicker(returnFocus = true): void {
+    if (!picker || picker.hidden) return
+    picker.hidden = true
+    pickBtn?.setAttribute('aria-expanded', 'false')
+    if (returnFocus) pickBtn?.focus()
+  }
+
+  async function useFromLibrary(v: VideoEntry): Promise<void> {
+    const url = v.source.url
+    if (!url) return
+    try {
+      // A copy, not a link: the library entry can change or go away afterwards
+      // without the front page losing its background.
+      hero = { ...hero, video: url, poster: v.poster || '' }
+      await save('hero', hero)
+      paintSlot()
+      onChange?.()
+      closePicker()
+      setMsg(msg, `“${v.title.trim() || 'That film'}” is now the main video — already live on the site.`, 'ok')
+    } catch (err) {
+      setMsg(msg, err instanceof Error ? err.message : 'Could not set the main video.', 'error')
+    }
   }
 
   async function replace(file: File): Promise<void> {
@@ -131,6 +227,7 @@ export function createHero(
       hero = { ...hero, video: up.url, poster: posterUrl }
       await save('hero', hero)
       paintSlot()
+      onChange?.()
       progress?.done()
       setMsg(msg, first ? 'Main video uploaded — already live on the site.' : 'Main video replaced — already live on the site.', 'ok')
     } catch (err) {
@@ -149,6 +246,7 @@ export function createHero(
       hero = { ...hero, video: '', poster: '' }
       await save('hero', hero)
       paintSlot()
+      onChange?.()
       setMsg(msg, 'Main video deleted — the site is updated.', 'ok')
     } catch (err) {
       setMsg(msg, err instanceof Error ? err.message : 'Could not delete the video.', 'error')
@@ -165,8 +263,16 @@ export function createHero(
     })
   }
 
-  chooseBtn?.addEventListener('click', () => input?.click())
+  chooseBtn?.addEventListener('click', () => {
+    closePicker(false)
+    input?.click()
+  })
   removeBtn?.addEventListener('click', () => void remove())
+  pickBtn?.addEventListener('click', () => (picker?.hidden ? openPicker() : closePicker()))
+  pickCancel?.addEventListener('click', () => closePicker())
+  picker?.addEventListener('keydown', (e) => {
+    if ((e as KeyboardEvent).key === 'Escape') closePicker()
+  })
   input?.addEventListener('change', () => {
     const file = input.files?.[0]
     if (file) void replace(file)
@@ -178,10 +284,12 @@ export function createHero(
       try {
         hero = await get<Hero>('hero', { brand: '', slogan: '' })
         paintSlot()
+        onChange?.()
       } catch {
         setMsg(msg, 'Could not load the main video.', 'error')
       }
     },
     paintMap,
+    videoUrl: () => hero.video ?? '',
   }
 }

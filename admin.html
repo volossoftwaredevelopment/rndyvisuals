@@ -114,6 +114,9 @@
                 <span class="hero-slot__name" id="hero-name" hidden></span>
                 <span class="hero-slot__btns">
                   <button id="hero-choose" class="btn btn--sm" type="button">Upload video</button>
+                  <button id="hero-pick" class="btn btn--ghost btn--sm" type="button" aria-expanded="false" aria-controls="hero-picker">
+                    Use a film from the library
+                  </button>
                   <button id="hero-remove" class="btn btn--ghost btn--sm btn--danger" type="button" hidden>
                     Delete video
                   </button>
@@ -125,6 +128,16 @@
                   wordmark — still tidy, simply without the film.
                 </span>
               </div>
+            </div>
+            <div class="hero-pick" id="hero-picker" hidden>
+              <p class="hero-pick__warn">
+                <b>This copies the film into the main slot.</b> The main video then lives on its own:
+                changing or deleting that film in the library afterwards leaves the main video exactly
+                as it is. Re-pick it here if you want them to match again.
+              </p>
+              <ul class="hero-pick__list" id="hero-pick-list"></ul>
+              <p class="hero-pick__note" id="hero-pick-note" hidden></p>
+              <button class="btn btn--ghost btn--sm" id="hero-pick-cancel" type="button">Cancel</button>
             </div>
             <p class="msg" id="hero-msg" role="status" aria-live="polite" hidden></p>
           </section>

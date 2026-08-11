@@ -1369,6 +1369,107 @@ textarea.field {
   background: #e2564d;
 }
 
+/* ---- "use a film from the library" picker ---------------------------------
+   The warning at the top is the whole point of this block: picking copies the
+   film into the slot, so the two stop being connected the moment you pick. */
+
+.hero-pick {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--line-strong, #2c3a45);
+  border-radius: 6px;
+  background: var(--surface-2, #131c24);
+}
+
+.hero-pick__warn {
+  margin: 0 0 12px;
+  padding-left: 11px;
+  border-left: 2px solid var(--accent, #5fc9ba);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--ink, #b8c4c6);
+}
+
+.hero-pick__warn b {
+  color: var(--ink-hi, #e8eef0);
+  font-weight: 600;
+}
+
+.hero-pick__list {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.hero-pick__item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 7px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: none;
+  color: var(--ink, #b8c4c6);
+  text-align: left;
+  cursor: pointer;
+}
+
+.hero-pick__item:hover:not(:disabled),
+.hero-pick__item:focus-visible {
+  border-color: var(--accent-dim, #2f6d66);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.hero-pick__item:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.hero-pick__thumb {
+  flex: none;
+  width: 74px;
+  aspect-ratio: 16 / 9;
+  border-radius: 3px;
+  background: #0d151b center / cover no-repeat;
+  border: 1px solid var(--line, #1c2730);
+}
+
+.hero-pick__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.875rem;
+  color: var(--ink-hi, #e8eef0);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hero-pick__act {
+  flex: none;
+  font-size: var(--fs-micro, 0.6875rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-mid, #8a999d);
+}
+
+.hero-pick__empty,
+.hero-pick__note {
+  margin: 0 0 10px;
+  font-size: 0.8125rem;
+  color: var(--ink-mid, #8a999d);
+}
+
+/* the film in the library that is also the background video */
+.badge--main {
+  border-color: var(--accent-dim, #2f6d66);
+  color: var(--accent, #5fc9ba);
+}
+
 .hero-slot__name {
   font-size: 0.8125rem;
   color: var(--ink, #b8c4c6);
