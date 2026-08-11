@@ -8,8 +8,14 @@ export function renderSectionOff(mount: HTMLElement, title: string): void {
   meta.content = 'noindex,nofollow'
   document.head.appendChild(meta)
 
-  const page = mount.closest('.page__inner') ?? mount
-  page.innerHTML = `
+  // The section mount (e.g. [data-shop]) is a sibling of .page__inner, not a
+  // child — so replace the intro block and drop the mount, otherwise the
+  // original headline would sit above the notice.
+  mount.remove()
+
+  const inner = document.querySelector<HTMLElement>('.page__inner')
+  if (!inner) return
+  inner.innerHTML = `
     <p class="eyebrow micro page__eyebrow">${title}</p>
     <h1 class="page__title display">Coming soon.</h1>
     <p class="page__lede">This section isn’t published yet. Everything else is over on the home page.</p>
